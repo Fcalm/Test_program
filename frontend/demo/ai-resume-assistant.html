@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI简历助手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --black: #000000;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4;
+            --gray-400: #a3a3a3;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white);
+            min-height: 100vh;
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 72px;
+            min-width: 72px;
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 24px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .sidebar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gray-900);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .sidebar-avatar svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--white);
+        }
+
+        .nav-back {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .nav-back:hover {
+            background: var(--gray-200);
+        }
+
+        .nav-back svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--gray-600);
+        }
+
+        .nav-divider {
+            width: 24px;
+            height: 1px;
+            background: var(--gray-200);
+            margin-bottom: 24px;
+        }
+
+        .quick-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .quick-nav-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .quick-nav-item:hover {
+            background: var(--gray-200);
+        }
+
+        .quick-nav-item svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--gray-500);
+        }
+
+        .quick-nav-item .tooltip {
+            position: absolute;
+            left: 52px;
+            background: var(--gray-900);
+            color: var(--white);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .quick-nav-item:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 24px;
+            gap: 24px;
+            overflow: hidden;
+        }
+
+        /* 左侧聊天区域 - 60% */
+        .chat-section {
+            width: 60%;
+            background: var(--gray-50);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--gray-200);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--white);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .chat-header-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--gray-900);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-header-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--white);
+        }
+
+        .chat-header-info h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .chat-header-info p {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .message.ai .message-avatar {
+            background: var(--gray-900);
+        }
+
+        .message.user .message-avatar {
+            background: var(--gray-300);
+        }
+
+        .message-avatar svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--white);
+        }
+
+        .message-content {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message.ai .message-content {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .message.user .message-content {
+            background: var(--gray-900);
+            color: var(--white);
+        }
+
+        .message-content p {
+            margin-bottom: 8px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content ul {
+            margin: 8px 0;
+            padding-left: 16px;
+        }
+
+        .message-content li {
+            margin-bottom: 4px;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+        }
+
+        .message.user .message-content strong {
+            color: var(--white);
+        }
+
+        .chat-input {
+            padding: 16px 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: var(--white);
+            border-radius: 0 0 16px 16px;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            background: var(--gray-100);
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--gray-400);
+            background: var(--white);
+        }
+
+        .chat-input textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            min-height: 44px;
+            max-height: 120px;
+            color: var(--gray-900);
+        }
+
+        .chat-input textarea::placeholder {
+            color: var(--gray-400);
+        }
+
+        .chat-input-actions {
+            display: flex;
+            gap: 6px;
+            padding: 0 8px 8px;
+        }
+
+        .input-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .input-action-btn:hover {
+            background: var(--gray-300);
+        }
+
+        .input-action-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--gray-600);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gray-900);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background: var(--gray-800);
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--white);
+        }
+
+        /* 右侧文档区域 - 30% */
+        .document-section {
+            width: 30%;
+            min-width: 280px;
+            background: var(--gray-50);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--gray-200);
+            animation: fadeIn 0.4s ease 0.1s both;
+        }
+
+        .document-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--white);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .document-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .document-header-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .document-header-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--gray-600);
+        }
+
+        .document-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .doc-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: var(--gray-100);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .doc-action-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .doc-action-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--gray-500);
+        }
+
+        .document-tabs {
+            display: flex;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--white);
+        }
+
+        .doc-tab {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-400);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .doc-tab.active {
+            color: var(--gray-900);
+            border-bottom-color: var(--gray-900);
+        }
+
+        .doc-tab:hover {
+            color: var(--gray-700);
+        }
+
+        .document-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .resume-preview {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .resume-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .resume-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+        }
+
+        .resume-title {
+            font-size: 13px;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .resume-contact {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .resume-contact span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .resume-section {
+            margin-bottom: 20px;
+        }
+
+        .resume-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .resume-item {
+            margin-bottom: 14px;
+        }
+
+        .resume-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .resume-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .resume-item-date {
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .resume-item-subtitle {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 6px;
+        }
+
+        .resume-item-desc {
+            font-size: 12px;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+
+        .resume-item-desc ul {
+            padding-left: 14px;
+        }
+
+        .resume-item-desc li {
+            margin-bottom: 3px;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .skill-tag {
+            padding: 4px 10px;
+            background: var(--gray-100);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .document-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--white);
+            border-radius: 0 0 16px 16px;
+        }
+
+        .doc-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .doc-save-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--gray-900);
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .doc-save-btn:hover {
+            background: var(--gray-800);
+        }
+
+        .doc-save-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--white);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .chat-section,
+            .document-section {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .document-section {
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 64px;
+                z-index: 1000;
+            }
+
+            .main-content {
+                margin-left: 64px;
+                padding: 16px;
+            }
+
+            .chat-input {
+                flex-direction: column;
+            }
+
+            .send-btn {
+                width: 100%;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <nav class="sidebar">
+            <div class="sidebar-avatar">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </div>
+
+            <a href="index.html" class="nav-back" title="返回首页">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <div class="quick-nav">
+                <div class="quick-nav-item" onclick="clearChat()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                    <span class="tooltip">清空聊天</span>
+                </div>
+
+                <div class="quick-nav-item" onclick="exportResume()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    <span class="tooltip">导出简历</span>
+                </div>
+
+                <div class="quick-nav-item" onclick="showHelp()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                    </svg>
+                    <span class="tooltip">帮助</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 左侧聊天区域 -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <div class="chat-header-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                    </div>
+                    <div class="chat-header-info">
+                        <h2>AI简历助手</h2>
+                        <p>智能优化您的简历</p>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        <div class="message-avatar">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                        </div>
+                        <div class="message-content">
+                            <p>您好！我是AI简历助手。</p>
+                            <p>我可以帮您：</p>
+                            <ul>
+                                <li><strong>优化简历内容</strong> - 润色工作经历</li>
+                                <li><strong>匹配职位关键词</strong> - 调整简历</li>
+                                <li><strong>格式建议</strong> - 排版优化</li>
+                            </ul>
+                            <p>请告诉我您需要什么帮助？</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input">
+                    <div class="chat-input-wrapper">
+                        <textarea id="messageInput" placeholder="输入您的问题..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                        <div class="chat-input-actions">
+                            <button class="input-action-btn" title="上传简历" onclick="uploadResume()">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                                </svg>
+                            </button>
+                            <button class="input-action-btn" title="语音输入" onclick="voiceInput()">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="send-btn" title="发送" onclick="sendMessage()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 右侧文档区域 -->
+            <section class="document-section">
+                <div class="document-header">
+                    <div class="document-header-left">
+                        <div class="document-header-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                        </div>
+                        <h3>简历预览</h3>
+                    </div>
+                    <div class="document-actions">
+                        <button class="doc-action-btn" title="放大" onclick="zoomIn()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                        </button>
+                        <button class="doc-action-btn" title="缩小" onclick="zoomOut()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM12 10H7v2h5v-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="document-tabs">
+                    <div class="doc-tab active" onclick="switchTab('preview')">预览</div>
+                    <div class="doc-tab" onclick="switchTab('edit')">编辑</div>
+                    <div class="doc-tab" onclick="switchTab('history')">历史</div>
+                </div>
+
+                <div class="document-content">
+                    <div class="resume-preview">
+                        <div class="resume-header">
+                            <div class="resume-name">张三</div>
+                            <div class="resume-title">前端开发工程师</div>
+                            <div class="resume-contact">
+                                <span>zhangsan@email.com</span>
+                                <span>138-0000-0000</span>
+                            </div>
+                        </div>
+
+                        <div class="resume-section">
+                            <div class="resume-section-title">个人简介</div>
+                            <p class="resume-item-desc">5年前端开发经验，熟练掌握React、Vue等主流框架，具备良好的代码规范和团队协作能力。</p>
+                        </div>
+
+                        <div class="resume-section">
+                            <div class="resume-section-title">工作经历</div>
+                            <div class="resume-item">
+                                <div class="resume-item-header">
+                                    <div class="resume-item-title">高级前端开发工程师</div>
+                                    <div class="resume-item-date">2021-至今</div>
+                                </div>
+                                <div class="resume-item-subtitle">ABC科技有限公司</div>
+                                <div class="resume-item-desc">
+                                    <ul>
+                                        <li>负责公司核心产品前端架构设计</li>
+                                        <li>优化首屏加载时间，性能提升40%</li>
+                                        <li>带领5人前端团队完成多个项目</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="resume-item">
+                                <div class="resume-item-header">
+                                    <div class="resume-item-title">前端开发工程师</div>
+                                    <div class="resume-item-date">2019-2021</div>
+                                </div>
+                                <div class="resume-item-subtitle">XYZ互联网公司</div>
+                                <div class="resume-item-desc">
+                                    <ul>
+                                        <li>参与电商平台前端开发与维护</li>
+                                        <li>实现响应式布局，适配多端设备</li>
+                                        <li>编写单元测试，覆盖率达85%</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="resume-section">
+                            <div class="resume-section-title">技能特长</div>
+                            <div class="skills-grid">
+                                <span class="skill-tag">React</span>
+                                <span class="skill-tag">Vue.js</span>
+                                <span class="skill-tag">TypeScript</span>
+                                <span class="skill-tag">Node.js</span>
+                                <span class="skill-tag">Webpack</span>
+                                <span class="skill-tag">Git</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="document-footer">
+                    <div class="doc-status">
+                        <div class="status-dot"></div>
+                        <span>自动保存</span>
+                    </div>
+                    <button class="doc-save-btn" onclick="saveResume()">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        保存
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                addMessage(aiResponse, 'ai');
+            }, 800);
+        }
+
+        function addMessage(content, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const avatarSvg = type === 'ai'
+                ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'
+                : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatarSvg}</div>
+                <div class="message-content"><p>${content}</p></div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateAIResponse(userMessage) {
+            const responses = {
+                '优化': '好的，我来帮您优化简历。请告诉我您想优化哪个部分？\n\n1. <strong>工作经历</strong> - 让描述更有说服力\n2. <strong>技能清单</strong> - 匹配目标岗位\n3. <strong>个人简介</strong> - 更简洁有力',
+                '关键词': '我来帮您分析目标岗位的关键词。请提供目标职位名称或职位描述。',
+                '格式': '关于简历格式，我建议：\n\n• 使用清晰的层次结构\n• 保持一致的字体和间距\n• 控制在1-2页为宜',
+                'default': '我理解您的需求。请提供更多信息：\n\n1. 您的目标岗位是什么？\n2. 您想重点优化哪部分内容？'
+            };
+
+            for (let key in responses) {
+                if (userMessage.includes(key)) {
+                    return responses[key];
+                }
+            }
+            return responses['default'];
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+            const textarea = event.target;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function clearChat() {
+            if (confirm('确定要清空聊天记录吗？')) {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                addMessage('聊天记录已清空。请告诉我您需要什么帮助？', 'ai');
+            }
+        }
+
+        function exportResume() {
+            alert('简历导出功能开发中...');
+        }
+
+        function showHelp() {
+            alert('使用指南：\n\n1. 在左侧聊天区输入需求\n2. 右侧实时预览简历\n3. 使用快捷按钮操作\n4. 随时保存简历');
+        }
+
+        function uploadResume() {
+            alert('上传简历功能开发中...');
+        }
+
+        function voiceInput() {
+            alert('语音输入功能开发中...');
+        }
+
+        function zoomIn() {
+            const preview = document.querySelector('.resume-preview');
+            const currentScale = preview.style.transform ? parseFloat(preview.style.transform.replace('scale(', '').replace(')', '')) : 1;
+            preview.style.transform = `scale(${Math.min(currentScale + 0.1, 1.5)})`;
+            preview.style.transformOrigin = 'top center';
+        }
+
+        function zoomOut() {
+            const preview = document.querySelector('.resume-preview');
+            const currentScale = preview.style.transform ? parseFloat(preview.style.transform.replace('scale(', '').replace(')', '')) : 1;
+            preview.style.transform = `scale(${Math.max(currentScale - 0.1, 0.5)})`;
+            preview.style.transformOrigin = 'top center';
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.doc-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            if (tabName === 'edit') {
+                alert('编辑模式功能开发中...');
+            } else if (tabName === 'history') {
+                alert('历史版本功能开发中...');
+            }
+        }
+
+        function saveResume() {
+            const btn = event.target.closest('.doc-save-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                已保存
+            `;
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+*.egg-info/
+dist/
+build/
+*.egg
+*.manifest
+*.spec
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Virtual environments
+.venv
+env/
+ENV/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Cache
+.cache/
+.mypy_cache/
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.temp
