@@ -643,11 +643,15 @@
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
 
-                // 模拟注册成功
-                showToast('注册成功！正在跳转到登录页面...', 'success');
+                // 模拟注册成功，自动登录
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('username', username);
+
+                showToast('注册成功！正在跳转到问卷调查...', 'success');
 
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = 'survey.html';
                 }, 1500);
             }, 1500);
         }

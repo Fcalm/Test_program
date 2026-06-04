@@ -605,11 +605,20 @@
                 return false;
             }
 
+            // 检查是否完成问卷
+            const surveyCompleted = localStorage.getItem('surveyCompleted');
+            if (!surveyCompleted) {
+                window.location.href = 'survey.html';
+                return false;
+            }
+
             // 显示用户名
+            const username = localStorage.getItem('username');
             const userEmail = localStorage.getItem('userEmail');
-            if (userEmail) {
-                const userName = userEmail.split('@')[0];
-                document.querySelector('.profile-name').textContent = userName;
+            if (username) {
+                document.querySelector('.profile-name').textContent = username;
+            } else if (userEmail) {
+                document.querySelector('.profile-name').textContent = userEmail.split('@')[0];
             }
 
             return true;
@@ -619,6 +628,9 @@
         function logout() {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userEmail');
+            localStorage.removeItem('username');
+            localStorage.removeItem('surveyCompleted');
+            localStorage.removeItem('surveyAnswers');
             window.location.href = 'login.html';
         }
 

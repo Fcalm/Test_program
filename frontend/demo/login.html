@@ -513,7 +513,13 @@
                 localStorage.setItem('userEmail', email);
 
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    // 检查是否完成问卷
+                    const surveyCompleted = localStorage.getItem('surveyCompleted');
+                    if (surveyCompleted) {
+                        window.location.href = 'index.html';
+                    } else {
+                        window.location.href = 'survey.html';
+                    }
                 }, 1500);
             }, 1500);
         }
