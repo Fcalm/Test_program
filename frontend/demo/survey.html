@@ -709,11 +709,11 @@
 
         // 页面加载时检查状态
         window.addEventListener('load', function() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const token = localStorage.getItem('token');
             const surveyCompleted = localStorage.getItem('surveyCompleted');
 
             // 未登录则跳转登录页
-            if (isLoggedIn !== 'true') {
+            if (!token) {
                 window.location.href = 'login.html';
                 return;
             }

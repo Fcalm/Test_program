@@ -6,740 +6,326 @@
     <title>AI简历助手</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --white: #ffffff;
-            --black: #000000;
-            --gray-50: #fafafa;
-            --gray-100: #f5f5f5;
-            --gray-200: #e5e5e5;
-            --gray-300: #d4d4d4;
-            --gray-400: #a3a3a3;
-            --gray-500: #737373;
-            --gray-600: #525252;
-            --gray-700: #404040;
-            --gray-800: #262626;
+            --white: #ffffff; --black: #000000;
+            --gray-50: #fafafa; --gray-100: #f5f5f5; --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4; --gray-400: #a3a3a3; --gray-500: #737373;
+            --gray-600: #525252; --gray-700: #404040; --gray-800: #262626;
             --gray-900: #171717;
         }
 
-        body {
+        html, body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--white);
-            min-height: 100vh;
-            color: var(--gray-900);
-            line-height: 1.6;
+            background: var(--white); color: var(--gray-900); line-height: 1.6;
+            height: 100%; overflow: hidden;
         }
 
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+        .container { display: flex; height: 100vh; overflow: hidden; }
 
-        /* 左侧导航栏 */
+        /* ===== 左侧导航栏 ===== */
         .sidebar {
-            width: 72px;
-            min-width: 72px;
-            background: var(--white);
-            border-right: 1px solid var(--gray-200);
-            padding: 24px 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 100;
+            width: 72px; min-width: 72px; background: var(--white);
+            border-right: 1px solid var(--gray-200); padding: 24px 12px;
+            display: flex; flex-direction: column; align-items: center; z-index: 100;
         }
 
         .sidebar-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: var(--gray-900);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 28px;
+            width: 40px; height: 40px; border-radius: 10px; background: var(--gray-900);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 28px;
         }
-
-        .sidebar-avatar svg {
-            width: 22px;
-            height: 22px;
-            fill: var(--white);
-        }
+        .sidebar-avatar svg { width: 22px; height: 22px; fill: var(--white); }
 
         .nav-back {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: var(--gray-100);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
+            width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+            cursor: pointer; transition: all 0.2s ease; text-decoration: none;
+        }
+        .nav-back:hover { background: var(--gray-200); }
+        .nav-back svg { width: 18px; height: 18px; fill: var(--gray-600); }
+
+        .nav-divider { width: 24px; height: 1px; background: var(--gray-200); margin-bottom: 24px; }
+
+        .sidebar-nav {
+            display: flex; flex-direction: column; gap: 8px; flex: 1; width: 100%;
         }
 
-        .nav-back:hover {
-            background: var(--gray-200);
+        .sidebar-nav-item {
+            width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease; text-decoration: none;
+            position: relative; margin: 0 auto;
         }
-
-        .nav-back svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--gray-600);
+        .sidebar-nav-item:hover { background: var(--gray-200); }
+        .sidebar-nav-item.active { background: var(--gray-900); }
+        .sidebar-nav-item.active svg { fill: var(--white); }
+        .sidebar-nav-item svg { width: 18px; height: 18px; fill: var(--gray-500); }
+        .sidebar-nav-item .tooltip {
+            position: absolute; left: 52px; background: var(--gray-900); color: var(--white);
+            padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap;
+            opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 1000;
         }
+        .sidebar-nav-item:hover .tooltip { opacity: 1; visibility: visible; }
 
-        .nav-divider {
-            width: 24px;
-            height: 1px;
-            background: var(--gray-200);
-            margin-bottom: 24px;
-        }
-
-        .quick-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .quick-nav-item {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: var(--gray-100);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .quick-nav-item:hover {
-            background: var(--gray-200);
-        }
-
-        .quick-nav-item svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--gray-500);
-        }
-
-        .quick-nav-item .tooltip {
-            position: absolute;
-            left: 52px;
-            background: var(--gray-900);
-            color: var(--white);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 1000;
-        }
-
-        .quick-nav-item:hover .tooltip {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* 主内容区 */
+        /* ===== 主内容区 ===== */
         .main-content {
-            flex: 1;
-            display: flex;
-            padding: 24px;
-            gap: 24px;
-            overflow: hidden;
+            flex: 1; display: flex; padding: 24px; gap: 24px; overflow: hidden;
+            min-height: 0;
         }
 
-        /* 左侧聊天区域 - 60% */
+        /* ===== 聊天区域 ===== */
         .chat-section {
-            width: 60%;
-            background: var(--gray-50);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--gray-200);
-            animation: fadeIn 0.4s ease;
+            width: 60%; background: var(--gray-50); border-radius: 16px;
+            display: flex; flex-direction: column; border: 1px solid var(--gray-200);
+            min-height: 0; overflow: hidden;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
         .chat-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--white);
-            border-radius: 16px 16px 0 0;
+            padding: 16px 24px; border-bottom: 1px solid var(--gray-200);
+            display: flex; align-items: center; gap: 12px;
+            background: var(--white); border-radius: 16px 16px 0 0; flex-shrink: 0;
         }
+
+        .chat-header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
 
         .chat-header-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            background: var(--gray-900);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 36px; height: 36px; border-radius: 8px; background: var(--gray-900);
+            display: flex; align-items: center; justify-content: center;
         }
+        .chat-header-icon svg { width: 18px; height: 18px; fill: var(--white); }
 
-        .chat-header-icon svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--white);
-        }
+        .chat-header-info h2 { font-size: 16px; font-weight: 600; color: var(--gray-900); }
+        .chat-header-info p { font-size: 12px; color: var(--gray-400); }
 
-        .chat-header-info h2 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--gray-900);
+        .help-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            background: var(--gray-100); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0;
         }
-
-        .chat-header-info p {
-            font-size: 12px;
-            color: var(--gray-400);
-        }
+        .help-btn:hover { background: var(--gray-200); }
+        .help-btn svg { width: 16px; height: 16px; fill: var(--gray-500); }
 
         .chat-messages {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            flex: 1; padding: 24px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 16px; min-height: 0;
         }
 
-        .message {
-            display: flex;
-            gap: 10px;
-            max-width: 80%;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .message.ai {
-            align-self: flex-start;
-        }
-
-        .message.user {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
+        .message { display: flex; gap: 10px; max-width: 80%; animation: fadeIn 0.3s ease; }
+        .message.ai { align-self: flex-start; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
 
         .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
+        .message.ai .message-avatar { background: var(--gray-900); }
+        .message.user .message-avatar { background: var(--gray-300); }
+        .message-avatar svg { width: 16px; height: 16px; fill: var(--white); }
 
-        .message.ai .message-avatar {
-            background: var(--gray-900);
-        }
+        .message-content { padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+        .message.ai .message-content { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-700); }
+        .message.user .message-content { background: var(--gray-900); color: var(--white); }
+        .message-content p { margin-bottom: 8px; }
+        .message-content p:last-child { margin-bottom: 0; }
+        .message-content ul { margin: 8px 0; padding-left: 16px; }
+        .message-content li { margin-bottom: 4px; }
+        .message-content strong { font-weight: 600; }
+        .message.user .message-content strong { color: var(--white); }
 
-        .message.user .message-avatar {
-            background: var(--gray-300);
-        }
-
-        .message-avatar svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--white);
-        }
-
-        .message-content {
-            padding: 14px 18px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .message.ai .message-content {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            color: var(--gray-700);
-        }
-
-        .message.user .message-content {
-            background: var(--gray-900);
-            color: var(--white);
-        }
-
-        .message-content p {
-            margin-bottom: 8px;
-        }
-
-        .message-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .message-content ul {
-            margin: 8px 0;
-            padding-left: 16px;
-        }
-
-        .message-content li {
-            margin-bottom: 4px;
-        }
-
-        .message-content strong {
-            font-weight: 600;
-        }
-
-        .message.user .message-content strong {
-            color: var(--white);
-        }
-
+        /* ===== 聊天输入区 ===== */
         .chat-input {
-            padding: 16px 20px;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-            background: var(--white);
-            border-radius: 0 0 16px 16px;
+            padding: 12px 20px 16px; border-top: 1px solid var(--gray-200);
+            display: flex; gap: 10px; align-items: flex-end;
+            background: var(--white); border-radius: 0 0 16px 16px; flex-shrink: 0;
         }
 
         .chat-input-wrapper {
-            flex: 1;
-            background: var(--gray-100);
-            border-radius: 12px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-            overflow: hidden;
+            flex: 1; background: var(--gray-100); border-radius: 12px;
+            border: 1px solid transparent; transition: all 0.2s ease; overflow: hidden;
         }
-
-        .chat-input-wrapper:focus-within {
-            border-color: var(--gray-400);
-            background: var(--white);
-        }
+        .chat-input-wrapper:focus-within { border-color: var(--gray-400); background: var(--white); }
 
         .chat-input textarea {
-            width: 100%;
-            padding: 14px 16px;
-            border: none;
-            background: transparent;
-            resize: none;
-            font-size: 14px;
-            line-height: 1.5;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            min-height: 44px;
-            max-height: 120px;
-            color: var(--gray-900);
+            width: 100%; padding: 14px 16px; border: none; background: transparent;
+            resize: none; font-size: 14px; line-height: 1.5; font-family: 'Inter', sans-serif;
+            outline: none; min-height: 44px; max-height: 120px; color: var(--gray-900);
         }
+        .chat-input textarea::placeholder { color: var(--gray-400); }
 
-        .chat-input textarea::placeholder {
-            color: var(--gray-400);
-        }
-
-        .chat-input-actions {
-            display: flex;
-            gap: 6px;
-            padding: 0 8px 8px;
-        }
+        .chat-input-actions { display: flex; gap: 6px; padding: 0 8px 8px; }
 
         .input-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: var(--gray-200);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            background: var(--gray-200); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease;
         }
+        .input-action-btn:hover { background: var(--gray-300); }
+        .input-action-btn svg { width: 16px; height: 16px; fill: var(--gray-600); }
 
-        .input-action-btn:hover {
-            background: var(--gray-300);
-        }
+        .send-btn-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
 
-        .input-action-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--gray-600);
+        .clear-chat-btn {
+            width: 44px; height: 28px; border-radius: 8px; border: 1px solid var(--gray-200);
+            background: var(--white); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s ease;
         }
+        .clear-chat-btn:hover { border-color: var(--gray-400); background: var(--gray-50); }
+        .clear-chat-btn svg { width: 14px; height: 14px; fill: var(--gray-500); }
 
         .send-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: none;
-            background: var(--gray-900);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            width: 44px; height: 44px; border-radius: 12px; border: none;
+            background: var(--gray-900); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease;
         }
+        .send-btn:hover { background: var(--gray-800); }
+        .send-btn svg { width: 18px; height: 18px; fill: var(--white); }
 
-        .send-btn:hover {
-            background: var(--gray-800);
-        }
-
-        .send-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--white);
-        }
-
-        /* 右侧文档区域 - 30% */
+        /* ===== 右侧文档区域 ===== */
         .document-section {
-            width: 30%;
-            min-width: 280px;
-            background: var(--gray-50);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--gray-200);
-            animation: fadeIn 0.4s ease 0.1s both;
+            flex: 1; min-width: 280px; background: var(--gray-50); border-radius: 16px;
+            display: flex; flex-direction: column; border: 1px solid var(--gray-200);
+            animation: fadeIn 0.4s ease 0.1s both; min-height: 0; overflow: hidden;
         }
 
         .document-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--white);
-            border-radius: 16px 16px 0 0;
+            padding: 16px 20px; border-bottom: 1px solid var(--gray-200);
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--white); border-radius: 16px 16px 0 0; flex-shrink: 0;
         }
-
-        .document-header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .document-header-left { display: flex; align-items: center; gap: 10px; }
         .document-header-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: var(--gray-100);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 32px; height: 32px; border-radius: 8px; background: var(--gray-100);
+            display: flex; align-items: center; justify-content: center;
         }
+        .document-header-icon svg { width: 16px; height: 16px; fill: var(--gray-600); }
+        .document-header h3 { font-size: 14px; font-weight: 600; color: var(--gray-900); }
 
-        .document-header-icon svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--gray-600);
-        }
-
-        .document-header h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .document-actions {
-            display: flex;
-            gap: 6px;
-        }
-
+        .document-actions { display: flex; gap: 6px; }
         .doc-action-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: none;
-            background: var(--gray-100);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            width: 28px; height: 28px; border-radius: 6px; border: none;
+            background: var(--gray-100); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease;
         }
-
-        .doc-action-btn:hover {
-            background: var(--gray-200);
-        }
-
-        .doc-action-btn svg {
-            width: 14px;
-            height: 14px;
-            fill: var(--gray-500);
-        }
+        .doc-action-btn:hover { background: var(--gray-200); }
+        .doc-action-btn svg { width: 14px; height: 14px; fill: var(--gray-500); }
 
         .document-tabs {
-            display: flex;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--gray-200);
-            background: var(--white);
+            display: flex; padding: 0 16px; border-bottom: 1px solid var(--gray-200);
+            background: var(--white); flex-shrink: 0;
         }
-
         .doc-tab {
-            padding: 10px 16px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--gray-400);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
+            padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--gray-400);
+            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s ease;
         }
+        .doc-tab.active { color: var(--gray-900); border-bottom-color: var(--gray-900); }
+        .doc-tab:hover { color: var(--gray-700); }
 
-        .doc-tab.active {
-            color: var(--gray-900);
-            border-bottom-color: var(--gray-900);
-        }
+        .document-content { flex: 1; padding: 20px; overflow-y: auto; min-height: 0; }
 
-        .doc-tab:hover {
-            color: var(--gray-700);
-        }
+        .resume-preview { background: var(--white); border-radius: 12px; padding: 24px; border: 1px solid var(--gray-200); }
+        .resume-header { text-align: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--gray-200); }
+        .resume-name { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; letter-spacing: -0.02em; }
+        .resume-title { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+        .resume-contact { display: flex; justify-content: center; gap: 16px; margin-top: 12px; font-size: 11px; color: var(--gray-400); }
+        .resume-contact span { display: flex; align-items: center; gap: 4px; }
 
-        .document-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .resume-preview {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid var(--gray-200);
-        }
-
-        .resume-header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .resume-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: 4px;
-            letter-spacing: -0.02em;
-        }
-
-        .resume-title {
-            font-size: 13px;
-            color: var(--gray-500);
-            font-weight: 500;
-        }
-
-        .resume-contact {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 12px;
-            font-size: 11px;
-            color: var(--gray-400);
-        }
-
-        .resume-contact span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .resume-section {
-            margin-bottom: 20px;
-        }
-
+        .resume-section { margin-bottom: 20px; }
         .resume-section-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--gray-200);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 12px; font-weight: 600; color: var(--gray-900);
+            margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
+        .resume-item { margin-bottom: 14px; }
+        .resume-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .resume-item-title { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+        .resume-item-date { font-size: 11px; color: var(--gray-400); }
+        .resume-item-subtitle { font-size: 12px; color: var(--gray-500); margin-bottom: 6px; }
+        .resume-item-desc { font-size: 12px; color: var(--gray-500); line-height: 1.6; }
+        .resume-item-desc ul { padding-left: 14px; }
+        .resume-item-desc li { margin-bottom: 3px; }
 
-        .resume-item {
-            margin-bottom: 14px;
-        }
+        .skills-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .skill-tag { padding: 4px 10px; background: var(--gray-100); border-radius: 6px; font-size: 11px; color: var(--gray-600); font-weight: 500; }
 
-        .resume-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 4px;
-        }
+        .resume-preview[contenteditable="true"] { outline: none; border-color: var(--gray-400); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+        .resume-preview[contenteditable="true"]:focus { border-color: var(--gray-500); }
+        .resume-preview[contenteditable="true"] [contenteditable="true"]:focus { background: rgba(0,0,0,0.02); border-radius: 4px; outline: 1px dashed var(--gray-300); }
 
-        .resume-item-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
+        .edit-hint { font-size: 11px; color: var(--gray-400); text-align: center; padding: 6px 0; display: none; }
+        .edit-hint.visible { display: block; }
 
-        .resume-item-date {
-            font-size: 11px;
-            color: var(--gray-400);
-        }
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state svg { width: 64px; height: 64px; fill: var(--gray-300); margin-bottom: 20px; }
+        .empty-state p { font-size: 15px; color: var(--gray-500); margin-bottom: 6px; }
+        .empty-state .empty-sub { font-size: 13px; color: var(--gray-400); }
 
-        .resume-item-subtitle {
-            font-size: 12px;
-            color: var(--gray-500);
-            margin-bottom: 6px;
+        .toast {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--gray-900); color: var(--white); padding: 12px 24px;
+            border-radius: 10px; font-size: 14px; font-weight: 500;
+            transition: transform 0.3s ease; z-index: 1000;
         }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: #ef4444; }
 
-        .resume-item-desc {
-            font-size: 12px;
-            color: var(--gray-500);
-            line-height: 1.6;
-        }
+        .history-panel { display: none; }
+        .history-panel.active { display: block; }
+        .history-empty { text-align: center; padding: 40px 20px; color: var(--gray-400); font-size: 13px; }
+        .history-empty svg { width: 40px; height: 40px; fill: var(--gray-300); margin-bottom: 12px; }
 
-        .resume-item-desc ul {
-            padding-left: 14px;
+        .history-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 14px; border: 1px solid var(--gray-200); border-radius: 10px;
+            margin-bottom: 8px; background: var(--white); cursor: pointer; transition: all 0.2s ease;
         }
-
-        .resume-item-desc li {
-            margin-bottom: 3px;
+        .history-item:hover { border-color: var(--gray-300); background: var(--gray-50); }
+        .history-item-info { flex: 1; cursor: pointer; }
+        .history-item-actions { display: flex; gap: 6px; }
+        .history-btn {
+            width: 28px; height: 28px; border-radius: 6px; border: none;
+            background: var(--gray-100); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease;
         }
-
-        .skills-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .skill-tag {
-            padding: 4px 10px;
-            background: var(--gray-100);
-            border-radius: 6px;
-            font-size: 11px;
-            color: var(--gray-600);
-            font-weight: 500;
-        }
+        .history-btn:hover { background: var(--gray-200); }
+        .history-btn svg { width: 14px; height: 14px; fill: var(--gray-500); }
+        .history-item-time { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+        .history-item-date { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
 
         .document-footer {
-            padding: 12px 16px;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--white);
-            border-radius: 0 0 16px 16px;
+            padding: 12px 16px; border-top: 1px solid var(--gray-200);
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--white); border-radius: 0 0 16px 16px; flex-shrink: 0;
         }
+        .footer-left { display: flex; align-items: center; gap: 8px; }
+        .doc-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray-400); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
 
-        .doc-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: var(--gray-400);
+        .footer-actions { display: flex; gap: 8px; }
+
+        .doc-export-btn, .doc-save-btn {
+            padding: 8px 14px; border: none; border-radius: 8px;
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s ease; display: flex; align-items: center;
+            gap: 6px; font-family: 'Inter', sans-serif;
         }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
+        .doc-export-btn {
+            background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-200);
         }
+        .doc-export-btn:hover { border-color: var(--gray-400); color: var(--gray-900); }
+        .doc-export-btn svg { width: 12px; height: 12px; fill: var(--gray-600); }
 
-        .doc-save-btn {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 8px;
-            background: var(--gray-900);
-            color: var(--white);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-family: 'Inter', sans-serif;
-        }
+        .doc-save-btn { background: var(--gray-900); color: var(--white); }
+        .doc-save-btn:hover { background: var(--gray-800); }
+        .doc-save-btn svg { width: 12px; height: 12px; fill: var(--white); }
 
-        .doc-save-btn:hover {
-            background: var(--gray-800);
-        }
-
-        .doc-save-btn svg {
-            width: 12px;
-            height: 12px;
-            fill: var(--white);
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 1200px) {
-            .main-content {
-                flex-direction: column;
-            }
-
-            .chat-section,
-            .document-section {
-                width: 100%;
-                min-width: auto;
-            }
-
-            .document-section {
-                max-height: 400px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                width: 64px;
-                z-index: 1000;
-            }
-
-            .main-content {
-                margin-left: 64px;
-                padding: 16px;
-            }
-
-            .chat-input {
-                flex-direction: column;
-            }
-
-            .send-btn {
-                width: 100%;
-            }
-        }
-
-        /* 滚动条样式 */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--gray-300);
-            border-radius: 2px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-400);
-        }
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
     </style>
 </head>
 <body>
@@ -760,27 +346,25 @@
 
             <div class="nav-divider"></div>
 
-            <div class="quick-nav">
-                <div class="quick-nav-item" onclick="clearChat()">
+            <div class="sidebar-nav">
+                <a href="ai-resume-assistant.html" class="sidebar-nav-item active">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                     </svg>
-                    <span class="tooltip">清空聊天</span>
-                </div>
-
-                <div class="quick-nav-item" onclick="exportResume()">
+                    <span class="tooltip">简历助手</span>
+                </a>
+                <a href="ai-job-finder.html" class="sidebar-nav-item">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
                     </svg>
-                    <span class="tooltip">导出简历</span>
-                </div>
-
-                <div class="quick-nav-item" onclick="showHelp()">
+                    <span class="tooltip">岗位寻找</span>
+                </a>
+                <a href="ai-interview.html" class="sidebar-nav-item">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
                     </svg>
-                    <span class="tooltip">帮助</span>
-                </div>
+                    <span class="tooltip">AI面试官</span>
+                </a>
             </div>
         </nav>
 
@@ -789,15 +373,22 @@
             <!-- 左侧聊天区域 -->
             <section class="chat-section">
                 <div class="chat-header">
-                    <div class="chat-header-icon">
+                    <div class="chat-header-left">
+                        <div class="chat-header-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                        </div>
+                        <div class="chat-header-info">
+                            <h2>AI简历助手</h2>
+                            <p>智能优化您的简历</p>
+                        </div>
+                    </div>
+                    <button class="help-btn" title="帮助" onclick="showHelp()">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
                         </svg>
-                    </div>
-                    <div class="chat-header-info">
-                        <h2>AI简历助手</h2>
-                        <p>智能优化您的简历</p>
-                    </div>
+                    </button>
                 </div>
 
                 <div class="chat-messages" id="chatMessages">
@@ -836,11 +427,18 @@
                             </button>
                         </div>
                     </div>
-                    <button class="send-btn" title="发送" onclick="sendMessage()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    </button>
+                    <div class="send-btn-col">
+                        <button class="clear-chat-btn" title="清空聊天" onclick="clearChat()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
+                        <button class="send-btn" title="发送" onclick="sendMessage()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -876,212 +474,315 @@
                 </div>
 
                 <div class="document-content">
-                    <div class="resume-preview">
-                        <div class="resume-header">
-                            <div class="resume-name">张三</div>
-                            <div class="resume-title">前端开发工程师</div>
-                            <div class="resume-contact">
-                                <span>zhangsan@email.com</span>
-                                <span>138-0000-0000</span>
-                            </div>
-                        </div>
-
-                        <div class="resume-section">
-                            <div class="resume-section-title">个人简介</div>
-                            <p class="resume-item-desc">5年前端开发经验，熟练掌握React、Vue等主流框架，具备良好的代码规范和团队协作能力。</p>
-                        </div>
-
-                        <div class="resume-section">
-                            <div class="resume-section-title">工作经历</div>
-                            <div class="resume-item">
-                                <div class="resume-item-header">
-                                    <div class="resume-item-title">高级前端开发工程师</div>
-                                    <div class="resume-item-date">2021-至今</div>
-                                </div>
-                                <div class="resume-item-subtitle">ABC科技有限公司</div>
-                                <div class="resume-item-desc">
-                                    <ul>
-                                        <li>负责公司核心产品前端架构设计</li>
-                                        <li>优化首屏加载时间，性能提升40%</li>
-                                        <li>带领5人前端团队完成多个项目</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="resume-item">
-                                <div class="resume-item-header">
-                                    <div class="resume-item-title">前端开发工程师</div>
-                                    <div class="resume-item-date">2019-2021</div>
-                                </div>
-                                <div class="resume-item-subtitle">XYZ互联网公司</div>
-                                <div class="resume-item-desc">
-                                    <ul>
-                                        <li>参与电商平台前端开发与维护</li>
-                                        <li>实现响应式布局，适配多端设备</li>
-                                        <li>编写单元测试，覆盖率达85%</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="resume-section">
-                            <div class="resume-section-title">技能特长</div>
-                            <div class="skills-grid">
-                                <span class="skill-tag">React</span>
-                                <span class="skill-tag">Vue.js</span>
-                                <span class="skill-tag">TypeScript</span>
-                                <span class="skill-tag">Node.js</span>
-                                <span class="skill-tag">Webpack</span>
-                                <span class="skill-tag">Git</span>
-                            </div>
-                        </div>
+                    <div class="preview-panel" id="previewPanel">
+                        <div class="edit-hint" id="editHint">✏️ 点击简历内容即可编辑，编辑完成后请保存</div>
+                        <div class="resume-preview" id="resumePreview"></div>
+                    </div>
+                    <div class="history-panel" id="historyPanel">
+                        <div id="historyList"></div>
                     </div>
                 </div>
 
                 <div class="document-footer">
-                    <div class="doc-status">
-                        <div class="status-dot"></div>
-                        <span>自动保存</span>
+                    <div class="footer-left">
+                        <div class="doc-status">
+                            <div class="status-dot"></div>
+                            <span>自动保存</span>
+                        </div>
                     </div>
-                    <button class="doc-save-btn" onclick="saveResume()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
-                        </svg>
-                        保存
-                    </button>
+                    <div class="footer-actions">
+                        <button class="doc-export-btn" onclick="exportResume()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                            导出
+                        </button>
+                        <button class="doc-save-btn" onclick="saveResume()">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                            </svg>
+                            保存
+                        </button>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
-        function sendMessage() {
+        const API_BASE = 'http://localhost:8000';
+        let hasResume = false;
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function apiFetch(path, options = {}) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+            if (res.status === 401) {
+                localStorage.removeItem('token'); localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html'; throw new Error('未登录');
+            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || '请求失败');
+            return data;
+        }
+
+        function renderResumeHTML(data) {
+            const b = data.basic_info || {};
+            const edu = data.education || [];
+            const intern = data.internship_exp || [];
+            const proj = data.project_exp || [];
+            const strengths = data.personal_strengths || [];
+            let html = `<div class="resume-header"><div class="resume-name">${b.name || '姓名'}</div><div class="resume-title">求职者</div><div class="resume-contact">${b.email ? `<span>${b.email}</span>` : ''}${b.phone ? `<span>${b.phone}</span>` : ''}</div></div>`;
+            if (edu.length) { html += `<div class="resume-section"><div class="resume-section-title">教育经历</div>`; edu.forEach(e => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${e.school || ''} · ${e.degree || ''} · ${e.major || ''}</div><div class="resume-item-date">${e.time || ''}</div></div>${e.courses ? `<div class="resume-item-desc">主修课程：${e.courses}</div>` : ''}</div>`; }); html += `</div>`; }
+            if (intern.length) { html += `<div class="resume-section"><div class="resume-section-title">实习经历</div>`; intern.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${item.role || ''}</div><div class="resume-item-date">${item.time || ''}</div></div><div class="resume-item-subtitle">${item.company || ''}</div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
+            if (proj.length) { html += `<div class="resume-section"><div class="resume-section-title">项目经历</div>`; proj.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${item.name || ''} | ${item.role || ''}</div><div class="resume-item-date">${item.time || ''}</div></div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
+            if (strengths.length) { html += `<div class="resume-section"><div class="resume-section-title">个人优势</div><div class="resume-item-desc"><ul>${strengths.map(s => `<li>${s}</li>`).join('')}</ul></div></div>`; }
+            return html;
+        }
+
+        function showEmptyState() {
+            hasResume = false;
+            document.getElementById('resumePreview').innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg><p>快用AI助手完成你的第一版简历吧</p><p class="empty-sub">在左侧聊天区告诉AI你的经历，即可自动生成简历</p></div>`;
+        }
+
+        async function loadResume() {
+            try {
+                const data = await apiFetch('/resume');
+                if (data.has_resume) { hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data); }
+                else { showEmptyState(); }
+            } catch (err) { showEmptyState(); }
+        }
+
+        async function saveResume() {
+            const btn = document.querySelector('.doc-save-btn');
+            const original = btn.innerHTML;
+            if (!hasResume) { showToast('请先通过AI助手生成简历', 'error'); return; }
+            btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 已保存`;
+            showToast('保存成功');
+            setTimeout(() => { btn.innerHTML = original; }, 2000);
+        }
+
+        async function generateDemoResume() {
+            try {
+                const demoData = {
+                    basic_info: { name: "范炜乾", phone: "138-xxxx-xxxx", email: "xxx@qq.com" },
+                    education: [{ school: "南昌大学", degree: "211/双一流 · 本科", major: "工商管理", time: "2022.09 - 2026.06", courses: "管理学、市场营销、消费者行为学、商业数据分析" }],
+                    internship_exp: [{ company: "字节跳动", role: "产品运营实习生", time: "2024.06 - 2024.09", description: ["负责产品运营相关工作", "参与用户增长策略制定"] }],
+                    project_exp: [
+                        { name: "微信小程序开发项目", role: "产品负责人", time: "2023.09 ~ 2023.12", description: ["需求分析：针对大学生校园闲置物品交易痛点，通过线上问卷调研提取核心诉求", "产品设计：独立完成产品业务流程图与核心页面原型设计", "AI辅研：运用Claude Code辅助编写前后端逻辑，缩短开发周期"] },
+                        { name: "To-Do App 开发项目", role: "产品负责人", time: "2024.01 ~ 2024.04", description: ["竞品分析：深度体验市面主流任务管理产品，输出竞品分析报告", "功能落地：主导规划任务创建、分类标签、状态追踪等核心模块", "迭代优化：组织内测用户进行产品体验，收集有效反馈并优化交互细节"] }
+                    ],
+                    personal_strengths: ["产品专业技能：具备独立的产品规划与落地能力，熟练掌握需求拆解、竞品分析、流程图绘制", "AI工具应用：深度掌握Claude Code、ChatGPT等前沿AI工具在实际业务中的应用", "商业与同理心：依托工商管理专业背景，具备扎实的商业逻辑与市场洞察力"]
+                };
+                const data = await apiFetch('/resume', { method: 'POST', body: JSON.stringify(demoData) });
+                hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                showToast('简历生成成功！');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             if (!message) return;
+            addMessage(message, 'user'); input.value = ''; input.style.height = 'auto';
+            if (isJDText(message)) {
+                addMessage('正在解析 JD...', 'ai');
+                try {
+                    const result = await apiFetch('/tools/parse-jd', { method: 'POST', body: JSON.stringify({ text: message }) });
+                    removeLastAIMessage();
+                    if (result.success) { addMessage(formatJDResult(result.data, result.method), 'ai'); }
+                    else { addMessage(`❌ 解析失败：${result.error}`, 'ai'); }
+                } catch (err) { removeLastAIMessage(); addMessage(`❌ 解析异常：${err.message}`, 'ai'); }
+            } else {
+                setTimeout(() => { addMessage(generateAIResponse(message), 'ai'); }, 800);
+            }
+        }
 
-            addMessage(message, 'user');
-            input.value = '';
-            input.style.height = 'auto';
+        function isJDText(text) {
+            const keywords = ['岗位', '职位', '职责', '要求', '任职', '薪资', '福利', '工作内容', '任职资格'];
+            return keywords.filter(kw => text.includes(kw)).length >= 2 && text.length > 100;
+        }
 
-            setTimeout(() => {
-                const aiResponse = generateAIResponse(message);
-                addMessage(aiResponse, 'ai');
-            }, 800);
+        function removeLastAIMessage() {
+            const msgs = document.querySelectorAll('.message.ai');
+            if (msgs.length) msgs[msgs.length - 1].remove();
+        }
+
+        function formatJDResult(data, method) {
+            let html = `<strong>📋 JD 解析结果</strong> <span style="font-size:11px;color:#999;">（${method}）</span><br><br>`;
+            if (data.position) html += `<strong>职位：</strong>${data.position}<br>`;
+            if (data.company) html += `<strong>公司：</strong>${data.company}<br>`;
+            if (data.location) html += `<strong>地点：</strong>${data.location}<br>`;
+            if (data.salary) html += `<strong>薪资：</strong>${data.salary}<br>`;
+            if (data.responsibilities?.length) { html += `<br><strong>岗位职责：</strong><ul>`; data.responsibilities.forEach(i => html += `<li>${i}</li>`); html += `</ul>`; }
+            if (data.requirements?.length) { html += `<strong>任职要求：</strong><ul>`; data.requirements.forEach(i => html += `<li>${i}</li>`); html += `</ul>`; }
+            if (data.benefits?.length) html += `<strong>福利待遇：</strong>${data.benefits.join('、')}`;
+            return html;
         }
 
         function addMessage(content, type) {
             const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-
-            const avatarSvg = type === 'ai'
-                ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'
-                : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${avatarSvg}</div>
-                <div class="message-content"><p>${content}</p></div>
-            `;
-
-            chatMessages.appendChild(messageDiv);
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            const avatar = type === 'ai' ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+            div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-content"><p>${content}</p></div>`;
+            chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function generateAIResponse(userMessage) {
-            const responses = {
-                '优化': '好的，我来帮您优化简历。请告诉我您想优化哪个部分？\n\n1. <strong>工作经历</strong> - 让描述更有说服力\n2. <strong>技能清单</strong> - 匹配目标岗位\n3. <strong>个人简介</strong> - 更简洁有力',
-                '关键词': '我来帮您分析目标岗位的关键词。请提供目标职位名称或职位描述。',
-                '格式': '关于简历格式，我建议：\n\n• 使用清晰的层次结构\n• 保持一致的字体和间距\n• 控制在1-2页为宜',
-                'default': '我理解您的需求。请提供更多信息：\n\n1. 您的目标岗位是什么？\n2. 您想重点优化哪部分内容？'
-            };
-
-            for (let key in responses) {
-                if (userMessage.includes(key)) {
-                    return responses[key];
-                }
-            }
-            return responses['default'];
+        function generateAIResponse(msg) {
+            if (msg.includes('生成') || msg.includes('简历')) { generateDemoResume(); return '好的，正在为您生成简历...请查看右侧预览区域。'; }
+            const r = { '优化': '好的，我来帮您优化简历。请告诉我您想优化哪个部分？\n\n1. <strong>工作经历</strong> - 让描述更有说服力\n2. <strong>技能清单</strong> - 匹配目标岗位\n3. <strong>个人简介</strong> - 更简洁有力', '关键词': '我来帮您分析目标岗位的关键词。请提供目标职位名称或职位描述。', '格式': '关于简历格式，我建议：\n\n• 使用清晰的层次结构\n• 保持一致的字体和间距\n• 控制在1-2页为宜', 'default': '我理解您的需求。请提供更多信息：\n\n1. 您的目标岗位是什么？\n2. 您想重点优化哪部分内容？' };
+            for (let k in r) { if (msg.includes(k)) return r[k]; }
+            return r['default'];
         }
 
-        function handleKeyDown(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-            const textarea = event.target;
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px';
         }
 
         function clearChat() {
             if (confirm('确定要清空聊天记录吗？')) {
-                const chatMessages = document.getElementById('chatMessages');
-                chatMessages.innerHTML = '';
+                document.getElementById('chatMessages').innerHTML = '';
                 addMessage('聊天记录已清空。请告诉我您需要什么帮助？', 'ai');
             }
         }
 
         function exportResume() {
-            alert('简历导出功能开发中...');
+            const preview = document.getElementById('resumePreview');
+            const content = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>我的简历</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333;line-height:1.6;}h1{text-align:center;margin-bottom:4px;}h2{border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:20px;}.subtitle{text-align:center;color:#666;font-size:14px;}.contact{text-align:center;color:#999;font-size:12px;margin-bottom:20px;}ul{padding-left:20px;}li{margin-bottom:4px;}</style></head><body>${preview.innerHTML}</body></html>`;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = '简历.html'; a.click();
+            URL.revokeObjectURL(url);
         }
 
         function showHelp() {
-            alert('使用指南：\n\n1. 在左侧聊天区输入需求\n2. 右侧实时预览简历\n3. 使用快捷按钮操作\n4. 随时保存简历');
+            alert('使用指南：\n\n1. 在左侧聊天区输入"生成简历"，AI会自动生成示例简历\n2. 右侧实时预览简历内容\n3. 点击「编辑」Tab可直接编辑简历内容\n4. 点击「历史」Tab查看保存版本\n5. 使用缩放按钮调整预览大小\n6. 点击「导出」按钮下载简历为HTML文件');
         }
 
         function uploadResume() {
-            alert('上传简历功能开发中...');
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file'; fileInput.accept = '.pdf,.docx'; fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+            fileInput.onchange = async function() {
+                const file = fileInput.files[0]; if (!file) return;
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!['.pdf', '.docx'].includes(ext)) { showToast('仅支持 PDF 和 DOCX 格式', 'error'); document.body.removeChild(fileInput); return; }
+                if (file.size > 10 * 1024 * 1024) { showToast('文件过大，最大支持 10MB', 'error'); document.body.removeChild(fileInput); return; }
+                addMessage(`📎 正在上传：${file.name}`, 'ai');
+                const formData = new FormData(); formData.append('file', file);
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`${API_BASE}/tools/upload-resume`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail || '上传失败');
+                    hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                    removeLastAIMessage(); addMessage('✅ 简历上传解析成功！已更新到预览区。', 'ai'); showToast('简历上传成功');
+                } catch (err) { removeLastAIMessage(); addMessage(`❌ 上传失败：${err.message}`, 'ai'); showToast(err.message, 'error'); }
+                document.body.removeChild(fileInput);
+            };
+            fileInput.click();
         }
 
-        function voiceInput() {
-            alert('语音输入功能开发中...');
-        }
+        function voiceInput() { alert('语音输入功能开发中...'); }
 
         function zoomIn() {
-            const preview = document.querySelector('.resume-preview');
-            const currentScale = preview.style.transform ? parseFloat(preview.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            preview.style.transform = `scale(${Math.min(currentScale + 0.1, 1.5)})`;
-            preview.style.transformOrigin = 'top center';
+            const p = document.getElementById('resumePreview');
+            const s = p.style.transform ? parseFloat(p.style.transform.replace('scale(', '').replace(')', '')) : 1;
+            p.style.transform = `scale(${Math.min(s + 0.1, 1.5)})`; p.style.transformOrigin = 'top center';
         }
-
         function zoomOut() {
-            const preview = document.querySelector('.resume-preview');
-            const currentScale = preview.style.transform ? parseFloat(preview.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            preview.style.transform = `scale(${Math.max(currentScale - 0.1, 0.5)})`;
-            preview.style.transformOrigin = 'top center';
+            const p = document.getElementById('resumePreview');
+            const s = p.style.transform ? parseFloat(p.style.transform.replace('scale(', '').replace(')', '')) : 1;
+            p.style.transform = `scale(${Math.max(s - 0.1, 0.5)})`; p.style.transformOrigin = 'top center';
         }
 
         function switchTab(tabName) {
-            document.querySelectorAll('.doc-tab').forEach(tab => {
-                tab.classList.remove('active');
+            document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+            // 高亮目标 tab
+            document.querySelectorAll('.doc-tab').forEach(t => {
+                if (t.textContent.trim() === ({ preview: '预览', edit: '编辑', history: '历史' }[tabName])) {
+                    t.classList.add('active');
+                }
             });
-            event.target.classList.add('active');
-
-            if (tabName === 'edit') {
-                alert('编辑模式功能开发中...');
+            const preview = document.getElementById('resumePreview');
+            const editHint = document.getElementById('editHint');
+            const previewPanel = document.getElementById('previewPanel');
+            const historyPanel = document.getElementById('historyPanel');
+            if (tabName === 'preview') {
+                preview.setAttribute('contenteditable', 'false'); editHint.classList.remove('visible');
+                previewPanel.style.display = 'block'; historyPanel.classList.remove('active');
+            } else if (tabName === 'edit') {
+                if (!hasResume) { showToast('请先通过AI助手生成简历', 'error'); return; }
+                preview.setAttribute('contenteditable', 'true'); editHint.classList.add('visible');
+                previewPanel.style.display = 'block'; historyPanel.classList.remove('active'); preview.focus();
             } else if (tabName === 'history') {
-                alert('历史版本功能开发中...');
+                preview.setAttribute('contenteditable', 'false'); editHint.classList.remove('visible');
+                previewPanel.style.display = 'none'; historyPanel.classList.add('active'); loadHistory();
             }
         }
 
-        function saveResume() {
-            const btn = event.target.closest('.doc-save-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-                已保存
-            `;
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-            }, 2000);
+        async function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            try {
+                const history = await apiFetch('/resume/history');
+                if (history.length === 0) {
+                    historyList.innerHTML = `<div class="history-empty"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg><p>暂无历史版本</p><p style="font-size:11px;margin-top:4px;">保存简历后将自动记录历史版本</p></div>`;
+                    return;
+                }
+                historyList.innerHTML = history.map(item => {
+                    const date = new Date(item.created_at);
+                    const timeStr = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+                    const fields = item.changed_fields.map(f => ({ basic_info: '基本信息', education: '教育经历', internship_exp: '实习经历', project_exp: '项目经历', personal_strengths: '个人优势' }[f] || f)).join('、');
+                    return `
+                        <div class="history-item">
+                            <div class="history-item-info" onclick="restoreVersion(${item.id})">
+                                <div class="history-item-time">${dateStr} ${timeStr}</div>
+                                <div class="history-item-date">变更：${fields}</div>
+                            </div>
+                            <div class="history-item-actions">
+                                <button class="history-btn" title="恢复" onclick="event.stopPropagation(); restoreVersion(${item.id})">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                                </button>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) { historyList.innerHTML = `<div class="history-empty"><p>加载失败：${err.message}</p></div>`; }
+        }
+
+        async function restoreVersion(historyId) {
+            if (!confirm('确定要恢复到此版本吗？')) return;
+            try {
+                const data = await apiFetch(`/resume/history/${historyId}/restore`, { method: 'POST' });
+                hasResume = true;
+                document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                switchTab('preview');
+                showToast('已恢复到历史版本');
+            } catch (err) { showToast(err.message, 'error'); }
         }
 
         document.getElementById('messageInput').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
+
+        (async function init() {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = 'login.html'; return; }
+            await loadResume();
+        })();
     </script>
 </body>
 </html>

@@ -508,6 +508,8 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        const API_BASE = 'http://localhost:8000';
+
         // 切换密码显示
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -526,7 +528,6 @@
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = `toast ${type} show`;
-
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
@@ -549,51 +550,31 @@
             ];
             const strengthText = document.getElementById('strengthText');
 
-            // 重置
-            bars.forEach(bar => {
-                bar.className = 'strength-bar';
-            });
+            bars.forEach(bar => { bar.className = 'strength-bar'; });
             strengthText.textContent = '';
-
             if (!password) return;
 
             let strength = 0;
-
-            // 长度检查
             if (password.length >= 6) strength++;
             if (password.length >= 10) strength++;
-
-            // 复杂度检查
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-            // 更新UI
             const activeBars = Math.min(strength, 4);
             for (let i = 0; i < activeBars; i++) {
                 bars[i].classList.add('active');
-                if (strength >= 3) {
-                    bars[i].classList.add('strong');
-                } else if (strength >= 2) {
-                    bars[i].classList.add('medium');
-                }
+                if (strength >= 3) bars[i].classList.add('strong');
+                else if (strength >= 2) bars[i].classList.add('medium');
             }
 
-            // 更新文字
-            if (strength <= 1) {
-                strengthText.textContent = '弱';
-                strengthText.style.color = 'var(--error)';
-            } else if (strength <= 2) {
-                strengthText.textContent = '中';
-                strengthText.style.color = 'var(--success)';
-            } else {
-                strengthText.textContent = '强';
-                strengthText.style.color = 'var(--success)';
-            }
+            if (strength <= 1) { strengthText.textContent = '弱'; strengthText.style.color = 'var(--error)'; }
+            else if (strength <= 2) { strengthText.textContent = '中'; strengthText.style.color = 'var(--success)'; }
+            else { strengthText.textContent = '强'; strengthText.style.color = 'var(--success)'; }
         }
 
         // 处理注册
-        function handleRegister(event) {
+        async function handleRegister(event) {
             event.preventDefault();
 
             const username = document.getElementById('username').value.trim();
@@ -606,10 +587,11 @@
             document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
             document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
 
-            // 验证
+            // 前端验证
             let hasError = false;
 
-            if (username.length < 3) {
+            if (username.length < 2) {
+                document.getElementById('usernameError').textContent = '用户名至少2个字符';
                 document.getElementById('usernameError').classList.add('show');
                 document.getElementById('username').classList.add('error');
                 hasError = true;
@@ -635,31 +617,56 @@
 
             if (hasError) return;
 
-            // 模拟注册
+            // 调用后端注册接口
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
-            setTimeout(() => {
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
 
-                // 模拟注册成功，自动登录
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('username', username);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || '注册失败');
+                }
+
+                // 注册成功，自动登录获取 token
+                const loginRes = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const loginData = await loginRes.json();
+
+                if (loginRes.ok) {
+                    localStorage.setItem('token', loginData.access_token);
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userEmail', email);
+                }
 
                 showToast('注册成功！正在跳转到问卷调查...', 'success');
 
                 setTimeout(() => {
                     window.location.href = 'survey.html';
                 }, 1500);
-            }, 1500);
+
+            } catch (err) {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                showToast(err.message, 'error');
+            }
         }
 
         // 检查是否已登录
         window.addEventListener('load', function() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (isLoggedIn === 'true') {
+            const token = localStorage.getItem('token');
+            if (token) {
                 window.location.href = 'index.html';
             }
         });

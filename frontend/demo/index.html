@@ -597,12 +597,41 @@
     </div>
 
     <script>
+        const API_BASE = 'http://localhost:8000';
+
         // 检查登录状态
-        function checkLogin() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (isLoggedIn !== 'true') {
+        async function checkLogin() {
+            const token = localStorage.getItem('token');
+            if (!token) {
                 window.location.href = 'login.html';
                 return false;
+            }
+
+            // 用 token 向后端验证并获取用户信息
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    // token 无效或过期，清除登录状态
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+
+                const user = await response.json();
+                document.querySelector('.profile-name').textContent = user.username;
+                localStorage.setItem('username', user.username);
+                localStorage.setItem('userEmail', user.email);
+
+            } catch (err) {
+                // 后端不可用时，降级使用本地缓存
+                const username = localStorage.getItem('username');
+                if (username) {
+                    document.querySelector('.profile-name').textContent = username;
+                }
             }
 
             // 检查是否完成问卷
@@ -612,20 +641,12 @@
                 return false;
             }
 
-            // 显示用户名
-            const username = localStorage.getItem('username');
-            const userEmail = localStorage.getItem('userEmail');
-            if (username) {
-                document.querySelector('.profile-name').textContent = username;
-            } else if (userEmail) {
-                document.querySelector('.profile-name').textContent = userEmail.split('@')[0];
-            }
-
             return true;
         }
 
         // 退出登录
         function logout() {
+            localStorage.removeItem('token');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userEmail');
             localStorage.removeItem('username');
