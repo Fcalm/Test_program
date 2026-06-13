@@ -14,7 +14,6 @@
 
         :root {
             --white: #ffffff;
-            --black: #000000;
             --gray-50: #fafafa;
             --gray-100: #f5f5f5;
             --gray-200: #e5e5e5;
@@ -347,6 +346,10 @@
             transform: translateX(-50%) translateY(0);
         }
 
+        .toast.error {
+            background: #ef4444;
+        }
+
         /* 响应式 */
         @media (max-width: 480px) {
             .survey-card {
@@ -376,10 +379,10 @@
         <div class="progress-section" id="progressSection">
             <div class="progress-header">
                 <span class="progress-text">问卷进度</span>
-                <span class="progress-count" id="progressCount">1/8</span>
+                <span class="progress-count" id="progressCount">1/7</span>
             </div>
             <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 12.5%"></div>
+                <div class="progress-fill" id="progressFill" style="width: 14.28%"></div>
             </div>
         </div>
 
@@ -387,7 +390,7 @@
         <div id="surveyContent">
             <!-- 问题1: 求职状态 -->
             <div class="survey-card" id="question1">
-                <div class="question-number">问题 1/8</div>
+                <div class="question-number">问题 1/7</div>
                 <h2 class="question-title">您目前的求职状态是？</h2>
                 <p class="question-desc">选择最符合您当前情况的选项</p>
                 <div class="options-grid">
@@ -402,7 +405,7 @@
 
             <!-- 问题2: 工作经验 -->
             <div class="survey-card" id="question2" style="display: none;">
-                <div class="question-number">问题 2/8</div>
+                <div class="question-number">问题 2/7</div>
                 <h2 class="question-title">您有多少年工作经验？</h2>
                 <p class="question-desc">包括实习和全职工作经验</p>
                 <div class="options-grid">
@@ -417,7 +420,7 @@
 
             <!-- 问题3: 目标职位 -->
             <div class="survey-card" id="question3" style="display: none;">
-                <div class="question-number">问题 3/8</div>
+                <div class="question-number">问题 3/7</div>
                 <h2 class="question-title">您期望的职位类型是？</h2>
                 <p class="question-desc">可多选，选择您感兴趣的领域</p>
                 <div class="options-grid">
@@ -434,7 +437,7 @@
 
             <!-- 问题4: 期望薪资 -->
             <div class="survey-card" id="question4" style="display: none;">
-                <div class="question-number">问题 4/8</div>
+                <div class="question-number">问题 4/7</div>
                 <h2 class="question-title">您的期望月薪是？</h2>
                 <p class="question-desc">选择您期望的薪资范围（税前）</p>
                 <div class="options-grid single-column">
@@ -449,7 +452,7 @@
 
             <!-- 问题5: 工作城市 -->
             <div class="survey-card" id="question5" style="display: none;">
-                <div class="question-number">问题 5/8</div>
+                <div class="question-number">问题 5/7</div>
                 <h2 class="question-title">您期望的工作城市是？</h2>
                 <p class="question-desc">可多选，选择您愿意工作的城市</p>
                 <div class="options-grid">
@@ -466,7 +469,7 @@
 
             <!-- 问题6: 学历 -->
             <div class="survey-card" id="question6" style="display: none;">
-                <div class="question-number">问题 6/8</div>
+                <div class="question-number">问题 6/7</div>
                 <h2 class="question-title">您的最高学历是？</h2>
                 <p class="question-desc">选择您已获得或正在攻读的最高学历</p>
                 <div class="options-grid single-column">
@@ -478,35 +481,18 @@
                 </div>
             </div>
 
-            <!-- 问题7: 技能领域 -->
+            <!-- 问题7: 求职优先级 -->
             <div class="survey-card" id="question7" style="display: none;">
-                <div class="question-number">问题 7/8</div>
-                <h2 class="question-title">您擅长的技能领域是？</h2>
-                <p class="question-desc">可多选，选择您熟悉的技术栈</p>
-                <div class="options-grid">
-                    <div class="option-item" onclick="toggleOption(this, 7)">JavaScript</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">Python</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">Java</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">C/C++</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">React/Vue</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">Node.js</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">数据库</div>
-                    <div class="option-item" onclick="toggleOption(this, 7)">云计算/DevOps</div>
-                </div>
-            </div>
-
-            <!-- 问题8: 求职优先级 -->
-            <div class="survey-card" id="question8" style="display: none;">
-                <div class="question-number">问题 8/8</div>
+                <div class="question-number">问题 7/7</div>
                 <h2 class="question-title">您求职时最看重什么？</h2>
                 <p class="question-desc">选择您最重视的因素</p>
                 <div class="options-grid single-column">
-                    <div class="option-item" onclick="selectOption(this, 8)">薪资待遇</div>
-                    <div class="option-item" onclick="selectOption(this, 8)">职业发展空间</div>
-                    <div class="option-item" onclick="selectOption(this, 8)">工作生活平衡</div>
-                    <div class="option-item" onclick="selectOption(this, 8)">公司文化氛围</div>
-                    <div class="option-item" onclick="selectOption(this, 8)">技术成长学习</div>
-                    <div class="option-item" onclick="selectOption(this, 8)">工作稳定性</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">薪资待遇</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">职业发展空间</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">工作生活平衡</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">公司文化氛围</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">技术成长学习</div>
+                    <div class="option-item" onclick="selectOption(this, 7)">工作稳定性</div>
                 </div>
             </div>
         </div>
@@ -549,8 +535,9 @@
 
     <script>
         // 问卷状态
+        const API_BASE = 'http://localhost:8000';
         let currentQuestion = 1;
-        let totalQuestions = 8;
+        let totalQuestions = 7;
         let answers = {};
 
         // 选择选项（单选）
@@ -587,19 +574,13 @@
             document.getElementById('nextBtn').disabled = selectedOptions.length === 0;
         }
 
-        // 下一题
-        function nextQuestion() {
-            if (currentQuestion >= totalQuestions) {
-                // 完成问卷
-                completeSurvey();
-                return;
-            }
-
+        // 跳转到指定题目
+        function goToQuestion(num) {
             // 隐藏当前问题
             document.getElementById(`question${currentQuestion}`).style.display = 'none';
 
-            // 显示下一题
-            currentQuestion++;
+            // 显示目标题目
+            currentQuestion = num;
             document.getElementById(`question${currentQuestion}`).style.display = 'block';
 
             // 更新进度
@@ -609,22 +590,20 @@
             updateButtons();
         }
 
+        // 下一题
+        function nextQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                // 完成问卷
+                completeSurvey();
+                return;
+            }
+            goToQuestion(currentQuestion + 1);
+        }
+
         // 上一题
         function prevQuestion() {
             if (currentQuestion <= 1) return;
-
-            // 隐藏当前问题
-            document.getElementById(`question${currentQuestion}`).style.display = 'none';
-
-            // 显示上一题
-            currentQuestion--;
-            document.getElementById(`question${currentQuestion}`).style.display = 'block';
-
-            // 更新进度
-            updateProgress();
-
-            // 更新按钮状态
-            updateButtons();
+            goToQuestion(currentQuestion - 1);
         }
 
         // 更新进度
@@ -643,11 +622,7 @@
             prevBtn.disabled = currentQuestion <= 1;
 
             // 下一题按钮
-            if (answers[currentQuestion]) {
-                nextBtn.disabled = false;
-            } else {
-                nextBtn.disabled = true;
-            }
+            nextBtn.disabled = !answers[currentQuestion];
 
             // 最后一题按钮文字
             if (currentQuestion === totalQuestions) {
@@ -668,8 +643,35 @@
         }
 
         // 完成问卷
-        function completeSurvey() {
-            // 保存问卷结果
+        async function completeSurvey() {
+            // 构建后端数据（问卷编号 → 字段名映射）
+            const profileData = {
+                job_status: answers[1] || null,
+                experience_years: answers[2] || null,
+                target_positions: Array.isArray(answers[3]) ? answers[3] : (answers[3] ? [answers[3]] : null),
+                expected_salary: answers[4] || null,
+                target_cities: Array.isArray(answers[5]) ? answers[5] : (answers[5] ? [answers[5]] : null),
+                education_level: answers[6] || null,
+                job_priority: answers[7] || null,
+            };
+
+            // 保存到后端
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE}/auth/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(profileData),
+                });
+                if (!res.ok) throw new Error('保存失败');
+            } catch (err) {
+                console.error('保存问卷数据失败:', err);
+            }
+
+            // 保存本地状态
             localStorage.setItem('surveyCompleted', 'true');
             localStorage.setItem('surveyAnswers', JSON.stringify(answers));
 

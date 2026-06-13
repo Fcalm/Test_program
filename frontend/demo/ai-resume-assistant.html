@@ -125,6 +125,10 @@
         .message.user .message-avatar { background: var(--gray-300); }
         .message-avatar svg { width: 16px; height: 16px; fill: var(--white); }
 
+        .message-body {
+            flex: 1;
+            min-width: 0;
+        }
         .message-content { padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
         .message.ai .message-content { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-700); }
         .message.user .message-content { background: var(--gray-900); color: var(--white); }
@@ -134,6 +138,69 @@
         .message-content li { margin-bottom: 4px; }
         .message-content strong { font-weight: 600; }
         .message.user .message-content strong { color: var(--white); }
+
+        /* Thinking 样式 - 独立思考过程框 */
+        .message-thinking {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+            border: 1px solid var(--gray-200);
+            border-left: 3px solid var(--gray-400);
+            border-radius: 0 8px 8px 0;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .message-thinking:hover {
+            background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
+            border-left-color: var(--gray-600);
+        }
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .thinking-header svg { fill: var(--gray-400); }
+        .thinking-content {
+            font-size: 12px;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            white-space: pre-wrap;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+            padding: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
+        }
+        .message-thinking.collapsed .thinking-content {
+            max-height: 0;
+            margin-top: 0;
+            padding: 0;
+        }
+        .thinking-toggle {
+            font-size: 10px;
+            color: var(--gray-400);
+            margin-left: auto;
+        }
+
+        /* 打字光标 */
+        .typing-cursor {
+            display: inline-block;
+            animation: blink 0.8s infinite;
+            color: var(--gray-400);
+            font-weight: 100;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
 
         /* ===== 聊天输入区 ===== */
         .chat-input {
@@ -147,6 +214,52 @@
             border: 1px solid transparent; transition: all 0.2s ease; overflow: hidden;
         }
         .chat-input-wrapper:focus-within { border-color: var(--gray-400); background: var(--white); }
+
+        /* 上传状态样式 */
+        .upload-status {
+            padding: 8px 16px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            margin: 0 16px 8px;
+            flex-shrink: 0;
+        }
+        .upload-status-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        .upload-status-content svg {
+            fill: var(--gray-500);
+            flex-shrink: 0;
+        }
+        #uploadFileName {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .upload-remove-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .upload-remove-btn:hover {
+            background: var(--gray-200);
+        }
+        .upload-remove-btn svg {
+            fill: var(--gray-400);
+        }
 
         .chat-input textarea {
             width: 100%; padding: 14px 16px; border: none; background: transparent;
@@ -291,6 +404,8 @@
         }
         .history-btn:hover { background: var(--gray-200); }
         .history-btn svg { width: 14px; height: 14px; fill: var(--gray-500); }
+        .history-btn[style*="color:#ef4444"]:hover { background: #fef2f2; }
+        .history-btn[style*="color:#ef4444"] svg { fill: #ef4444; }
         .history-item-time { font-size: 13px; font-weight: 500; color: var(--gray-800); }
         .history-item-date { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
 
@@ -326,6 +441,215 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal {
+            background: var(--white);
+            border-radius: 16px;
+            width: 480px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--gray-100);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--gray-500);
+            transition: all 0.2s ease;
+        }
+        .modal-close:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+        .format-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .format-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-option:hover {
+            border-color: var(--gray-300);
+            background: var(--gray-50);
+        }
+        .format-option.active {
+            border-color: var(--gray-900);
+            background: var(--gray-50);
+        }
+        .format-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .format-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--gray-600);
+        }
+        .format-option.active .format-icon {
+            background: var(--gray-900);
+        }
+        .format-option.active .format-icon svg {
+            fill: var(--white);
+        }
+        .format-info {
+            flex: 1;
+        }
+        .format-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        .format-desc {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+        .filename-input-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .filename-input-wrapper:focus-within {
+            border-color: var(--gray-900);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+        }
+        .form-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-900);
+        }
+        .form-input::placeholder {
+            color: var(--gray-400);
+        }
+        .filename-ext {
+            padding: 10px 14px;
+            background: var(--gray-100);
+            font-size: 14px;
+            color: var(--gray-500);
+            font-weight: 500;
+            border-left: 1px solid var(--gray-300);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: var(--gray-900);
+            color: var(--white);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: var(--gray-800);
+        }
+        .btn-primary svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--white);
+        }
+        .btn-secondary {
+            background: var(--white);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
     </style>
 </head>
 <body>
@@ -392,6 +716,7 @@
                 </div>
 
                 <div class="chat-messages" id="chatMessages">
+                    <!-- 静态开场白 -->
                     <div class="message ai">
                         <div class="message-avatar">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -399,25 +724,40 @@
                             </svg>
                         </div>
                         <div class="message-content">
-                            <p>您好！我是AI简历助手。</p>
+                            <p>您好！我是 AI 简历助手，很高兴为您服务！</p>
                             <p>我可以帮您：</p>
                             <ul>
-                                <li><strong>优化简历内容</strong> - 润色工作经历</li>
-                                <li><strong>匹配职位关键词</strong> - 调整简历</li>
-                                <li><strong>格式建议</strong> - 排版优化</li>
+                                <li>📋 分析 JD（职位描述）并提取关键信息</li>
+                                <li>📝 根据 JD 定制专属简历</li>
+                                <li>📊 计算简历与 JD 的匹配分数</li>
+                                <li>💡 提供简历优化建议</li>
                             </ul>
-                            <p>请告诉我您需要什么帮助？</p>
+                            <p>如果要生成简历或分析简历，请先发送 JD 文本。</p>
                         </div>
                     </div>
                 </div>
 
+                <!-- 上传文件状态显示 -->
+                <div class="upload-status" id="uploadStatus" style="display: none;">
+                    <div class="upload-status-content">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                        </svg>
+                        <span id="uploadFileName">简历.pdf</span>
+                        <button class="upload-remove-btn" onclick="removeUploadedFile()" title="移除">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <div class="chat-input">
                     <div class="chat-input-wrapper">
                         <textarea id="messageInput" placeholder="输入您的问题..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
                         <div class="chat-input-actions">
                             <button class="input-action-btn" title="上传简历" onclick="uploadResume()">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                                    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
                                 </svg>
                             </button>
                             <button class="input-action-btn" title="语音输入" onclick="voiceInput()">
@@ -454,12 +794,12 @@
                         <h3>简历预览</h3>
                     </div>
                     <div class="document-actions">
-                        <button class="doc-action-btn" title="放大" onclick="zoomIn()">
+                        <button class="doc-action-btn" title="放大" onclick="zoom(0.1)">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                             </svg>
                         </button>
-                        <button class="doc-action-btn" title="缩小" onclick="zoomOut()">
+                        <button class="doc-action-btn" title="缩小" onclick="zoom(-0.1)">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM12 10H7v2h5v-2z"/>
                             </svg>
@@ -511,9 +851,111 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- 保存模态框 -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>保存简历</h3>
+                <button class="modal-close" onclick="closeSaveModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="saveHistoryName">版本名称（可选）</label>
+                    <div class="filename-input-wrapper">
+                        <input type="text" id="saveHistoryName" class="form-input" placeholder="例如：投递字节跳动版本" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSave()}">
+                    </div>
+                    <p style="font-size:12px;color:var(--gray-400);margin-top:8px;">留空将自动使用日期时间作为名称</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSaveModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmSave()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                    </svg>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出模态框 -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>导出简历</h3>
+                <button class="modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">导出格式</label>
+                    <div class="format-options">
+                        <div class="format-option active" data-format="html" onclick="selectFormat('html')">
+                            <div class="format-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                                </svg>
+                            </div>
+                            <div class="format-info">
+                                <div class="format-name">HTML</div>
+                                <div class="format-desc">网页格式，可直接在浏览器打开</div>
+                            </div>
+                        </div>
+                        <div class="format-option" data-format="pdf" onclick="selectFormat('pdf')">
+                            <div class="format-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                                </svg>
+                            </div>
+                            <div class="format-info">
+                                <div class="format-name">PDF</div>
+                                <div class="format-desc">通用格式，适合打印和分享</div>
+                            </div>
+                        </div>
+                        <div class="format-option" data-format="docx" onclick="selectFormat('docx')">
+                            <div class="format-icon">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                                </svg>
+                            </div>
+                            <div class="format-info">
+                                <div class="format-name">DOCX</div>
+                                <div class="format-desc">Word格式，可编辑修改</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="exportFilename">文件名</label>
+                    <div class="filename-input-wrapper">
+                        <input type="text" id="exportFilename" class="form-input" placeholder="请输入文件名" value="简历">
+                        <span class="filename-ext" id="filenameExt">.html</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeExportModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmExport()">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    导出
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_BASE = 'http://localhost:8000';
         let hasResume = false;
+        let uploadedFile = null; // 存储上传的简历文件
+        let currentResumeData = null; // 存储当前简历数据
+
+        // XSS 防御：转义 HTML 特殊字符
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -542,11 +984,11 @@
             const intern = data.internship_exp || [];
             const proj = data.project_exp || [];
             const strengths = data.personal_strengths || [];
-            let html = `<div class="resume-header"><div class="resume-name">${b.name || '姓名'}</div><div class="resume-title">求职者</div><div class="resume-contact">${b.email ? `<span>${b.email}</span>` : ''}${b.phone ? `<span>${b.phone}</span>` : ''}</div></div>`;
-            if (edu.length) { html += `<div class="resume-section"><div class="resume-section-title">教育经历</div>`; edu.forEach(e => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${e.school || ''} · ${e.degree || ''} · ${e.major || ''}</div><div class="resume-item-date">${e.time || ''}</div></div>${e.courses ? `<div class="resume-item-desc">主修课程：${e.courses}</div>` : ''}</div>`; }); html += `</div>`; }
-            if (intern.length) { html += `<div class="resume-section"><div class="resume-section-title">实习经历</div>`; intern.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${item.role || ''}</div><div class="resume-item-date">${item.time || ''}</div></div><div class="resume-item-subtitle">${item.company || ''}</div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
-            if (proj.length) { html += `<div class="resume-section"><div class="resume-section-title">项目经历</div>`; proj.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${item.name || ''} | ${item.role || ''}</div><div class="resume-item-date">${item.time || ''}</div></div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
-            if (strengths.length) { html += `<div class="resume-section"><div class="resume-section-title">个人优势</div><div class="resume-item-desc"><ul>${strengths.map(s => `<li>${s}</li>`).join('')}</ul></div></div>`; }
+            let html = `<div class="resume-header"><div class="resume-name">${escapeHtml(b.name) || '姓名'}</div><div class="resume-contact">${b.email ? `<span>${escapeHtml(b.email)}</span>` : ''}${b.phone ? `<span>${escapeHtml(b.phone)}</span>` : ''}</div></div>`;
+            if (edu.length) { html += `<div class="resume-section"><div class="resume-section-title">教育经历</div>`; edu.forEach(e => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${escapeHtml(e.school) || ''} · ${escapeHtml(e.degree) || ''} · ${escapeHtml(e.major) || ''}</div><div class="resume-item-date">${escapeHtml(e.time) || ''}</div></div>${e.courses ? `<div class="resume-item-desc">主修课程：${escapeHtml(e.courses)}</div>` : ''}</div>`; }); html += `</div>`; }
+            if (intern.length) { html += `<div class="resume-section"><div class="resume-section-title">实习经历</div>`; intern.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${escapeHtml(item.role) || ''}</div><div class="resume-item-date">${escapeHtml(item.time) || ''}</div></div><div class="resume-item-subtitle">${escapeHtml(item.company) || ''}</div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
+            if (proj.length) { html += `<div class="resume-section"><div class="resume-section-title">项目经历</div>`; proj.forEach(item => { html += `<div class="resume-item"><div class="resume-item-header"><div class="resume-item-title">${escapeHtml(item.name) || ''} | ${escapeHtml(item.role) || ''}</div><div class="resume-item-date">${escapeHtml(item.time) || ''}</div></div>${item.description && item.description.length ? `<div class="resume-item-desc"><ul>${item.description.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul></div>` : ''}</div>`; }); html += `</div>`; }
+            if (strengths.length) { html += `<div class="resume-section"><div class="resume-section-title">个人优势</div><div class="resume-item-desc"><ul>${strengths.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div></div>`; }
             return html;
         }
 
@@ -558,18 +1000,150 @@
         async function loadResume() {
             try {
                 const data = await apiFetch('/resume');
-                if (data.has_resume) { hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data); }
-                else { showEmptyState(); }
-            } catch (err) { showEmptyState(); }
+                if (data.has_resume) {
+                    hasResume = true;
+                    currentResumeData = data;
+                    document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                } else {
+                    currentResumeData = null;
+                    showEmptyState();
+                }
+            } catch (err) {
+                currentResumeData = null;
+                showEmptyState();
+            }
         }
 
-        async function saveResume() {
-            const btn = document.querySelector('.doc-save-btn');
-            const original = btn.innerHTML;
+        function saveResume() {
             if (!hasResume) { showToast('请先通过AI助手生成简历', 'error'); return; }
-            btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> 已保存`;
-            showToast('保存成功');
-            setTimeout(() => { btn.innerHTML = original; }, 2000);
+            const resumeData = extractResumeFromPreview();
+            if (!resumeData) { showToast('无法提取简历数据', 'error'); return; }
+            document.getElementById('saveHistoryName').value = '';
+            document.getElementById('saveModal').classList.add('active');
+            document.getElementById('saveHistoryName').focus();
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('active');
+        }
+
+        async function confirmSave() {
+            const btn = document.querySelector('#saveModal .btn-primary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 保存中...';
+            btn.disabled = true;
+
+            try {
+                const resumeData = extractResumeFromPreview();
+                const historyName = document.getElementById('saveHistoryName').value.trim();
+                const payload = { ...resumeData };
+                if (historyName) payload.history_name = historyName;
+                const data = await apiFetch('/resume', { method: 'PUT', body: JSON.stringify(payload) });
+                currentResumeData = data;
+                showToast('保存成功');
+                closeSaveModal();
+            } catch (err) {
+                showToast('保存失败：' + err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // 从预览区提取简历数据
+        function extractResumeFromPreview() {
+            try {
+                const preview = document.getElementById('resumePreview');
+                // 编辑模式下从 DOM 提取（捕获用户的手动编辑）
+                if (preview && preview.getAttribute('contenteditable') === 'true') {
+                    return extractResumeFromDOM();
+                }
+                // 非编辑模式使用内存缓存
+                if (!currentResumeData) return null;
+                return {
+                    basic_info: currentResumeData.basic_info || { name: '', phone: '', email: '' },
+                    education: currentResumeData.education || [],
+                    internship_exp: currentResumeData.internship_exp || [],
+                    project_exp: currentResumeData.project_exp || [],
+                    personal_strengths: currentResumeData.personal_strengths || [],
+                };
+            } catch (err) {
+                console.error('提取简历数据失败:', err);
+                return null;
+            }
+        }
+
+        // 从 DOM 解析简历数据（编辑模式下使用）
+        function extractResumeFromDOM() {
+            const preview = document.getElementById('resumePreview');
+            if (!preview) return null;
+
+            const nameEl = preview.querySelector('.resume-name');
+            const contactSpans = preview.querySelectorAll('.resume-contact span');
+            const basic_info = {
+                name: nameEl ? nameEl.textContent.trim() : '',
+                email: contactSpans[0] ? contactSpans[0].textContent.trim() : '',
+                phone: contactSpans[1] ? contactSpans[1].textContent.trim() : '',
+            };
+
+            const education = [], internship_exp = [], project_exp = [], personal_strengths = [];
+
+            preview.querySelectorAll('.resume-section').forEach(section => {
+                const title = section.querySelector('.resume-section-title');
+                if (!title) return;
+                const titleText = title.textContent.trim();
+
+                if (titleText === '教育经历') {
+                    section.querySelectorAll('.resume-item').forEach(item => {
+                        const t = item.querySelector('.resume-item-title');
+                        const d = item.querySelector('.resume-item-date');
+                        const desc = item.querySelector('.resume-item-desc');
+                        if (t) {
+                            const parts = t.textContent.split('·').map(s => s.trim());
+                            education.push({
+                                school: parts[0] || '', degree: parts[1] || '', major: parts[2] || '',
+                                time: d ? d.textContent.trim() : '',
+                                courses: desc ? desc.textContent.replace('主修课程：', '').trim() : '',
+                            });
+                        }
+                    });
+                } else if (titleText === '实习经历') {
+                    section.querySelectorAll('.resume-item').forEach(item => {
+                        const t = item.querySelector('.resume-item-title');
+                        const d = item.querySelector('.resume-item-date');
+                        const sub = item.querySelector('.resume-item-subtitle');
+                        const lis = item.querySelectorAll('.resume-item-desc li');
+                        internship_exp.push({
+                            role: t ? t.textContent.trim() : '',
+                            time: d ? d.textContent.trim() : '',
+                            company: sub ? sub.textContent.trim() : '',
+                            description: Array.from(lis).map(li => li.textContent.trim()),
+                        });
+                    });
+                } else if (titleText === '项目经历') {
+                    section.querySelectorAll('.resume-item').forEach(item => {
+                        const t = item.querySelector('.resume-item-title');
+                        const d = item.querySelector('.resume-item-date');
+                        const lis = item.querySelectorAll('.resume-item-desc li');
+                        if (t) {
+                            const txt = t.textContent;
+                            const idx = txt.indexOf('|');
+                            project_exp.push({
+                                name: idx >= 0 ? txt.substring(0, idx).trim() : txt.trim(),
+                                role: idx >= 0 ? txt.substring(idx + 1).trim() : '',
+                                time: d ? d.textContent.trim() : '',
+                                description: Array.from(lis).map(li => li.textContent.trim()),
+                            });
+                        }
+                    });
+                } else if (titleText === '个人优势') {
+                    section.querySelectorAll('.resume-item-desc li').forEach(li => {
+                        personal_strengths.push(li.textContent.trim());
+                    });
+                }
+            });
+
+            return { basic_info, education, internship_exp, project_exp, personal_strengths };
         }
 
         async function generateDemoResume() {
@@ -585,66 +1159,265 @@
                     personal_strengths: ["产品专业技能：具备独立的产品规划与落地能力，熟练掌握需求拆解、竞品分析、流程图绘制", "AI工具应用：深度掌握Claude Code、ChatGPT等前沿AI工具在实际业务中的应用", "商业与同理心：依托工商管理专业背景，具备扎实的商业逻辑与市场洞察力"]
                 };
                 const data = await apiFetch('/resume', { method: 'POST', body: JSON.stringify(demoData) });
-                hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                hasResume = true;
+                currentResumeData = data;
+                document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
                 showToast('简历生成成功！');
             } catch (err) { showToast(err.message, 'error'); }
         }
 
+        // 对话历史
+        let chatHistory = [];
+
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            if (!message) return;
-            addMessage(message, 'user'); input.value = ''; input.style.height = 'auto';
-            if (isJDText(message)) {
-                addMessage('正在解析 JD...', 'ai');
+
+            // 检查是否有上传的文件或消息
+            if (!message && !uploadedFile) return;
+
+            let fullMessage = message;
+
+            // 如果有上传的文件，先上传文件
+            if (uploadedFile) {
+                const loadingId = addLoadingMessage();
                 try {
-                    const result = await apiFetch('/tools/parse-jd', { method: 'POST', body: JSON.stringify({ text: message }) });
-                    removeLastAIMessage();
-                    if (result.success) { addMessage(formatJDResult(result.data, result.method), 'ai'); }
-                    else { addMessage(`❌ 解析失败：${result.error}`, 'ai'); }
-                } catch (err) { removeLastAIMessage(); addMessage(`❌ 解析异常：${err.message}`, 'ai'); }
-            } else {
-                setTimeout(() => { addMessage(generateAIResponse(message), 'ai'); }, 800);
+                    const formData = new FormData();
+                    formData.append('file', uploadedFile);
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`${API_BASE}/tools/upload-resume`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail || '上传失败');
+
+                    // 将上传结果添加到消息中
+                    const fileInfo = `📎 已上传简历：${uploadedFile.name}`;
+                    fullMessage = fullMessage ? `${fileInfo}\n${message}` : fileInfo;
+
+                    // 更新简历预览
+                    hasResume = true;
+                    currentResumeData = data;
+                    document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+
+                    removeMessage(loadingId);
+                } catch (err) {
+                    removeMessage(loadingId);
+                    addMessage(`❌ 简历上传失败：${err.message}`, 'ai');
+                    showToast(err.message, 'error');
+                    return;
+                } finally {
+                    // 清除上传状态
+                    removeUploadedFile();
+                }
+            }
+
+            if (!fullMessage) return;
+
+            // 添加用户消息
+            addMessage(fullMessage, 'user');
+            chatHistory.push({ role: 'user', content: fullMessage });
+            input.value = '';
+            input.style.height = 'auto';
+
+            // 创建流式消息容器
+            const messageId = createStreamMessage();
+
+            try {
+                // 调用流式 API
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/agent/chat/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: fullMessage,
+                        history: chatHistory.slice(0, -1),
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('请求失败');
+                }
+
+                // 读取 SSE 流
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let thinkingText = '';
+                let contentText = '';
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // 解析 SSE 事件
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.type === 'thinking') {
+                                    thinkingText += data.data;
+                                    updateStreamMessage(messageId, thinkingText, contentText, true);
+                                } else if (data.type === 'content') {
+                                    contentText += data.data;
+                                    updateStreamMessage(messageId, thinkingText, contentText, false);
+                                } else if (data.type === 'resume') {
+                                    // 更新简历预览
+                                    hasResume = true;
+                                    currentResumeData = data.data;
+                                    document.getElementById('resumePreview').innerHTML = renderResumeHTML(data.data);
+                                    showToast('简历已更新');
+                                } else if (data.type === 'done') {
+                                    // 流结束
+                                    finalizeStreamMessage(messageId, thinkingText, contentText);
+                                    chatHistory.push({ role: 'assistant', content: contentText });
+                                }
+                            } catch (e) {
+                                // 忽略解析错误
+                            }
+                        }
+                    }
+                }
+
+            } catch (err) {
+                finalizeStreamMessage(messageId, '', `❌ 处理异常：${err.message}`);
             }
         }
 
-        function isJDText(text) {
-            const keywords = ['岗位', '职位', '职责', '要求', '任职', '薪资', '福利', '工作内容', '任职资格'];
-            return keywords.filter(kw => text.includes(kw)).length >= 2 && text.length > 100;
-        }
+        // 流式消息相关函数
+        let streamMessageCounter = 0;
 
-        function removeLastAIMessage() {
-            const msgs = document.querySelectorAll('.message.ai');
-            if (msgs.length) msgs[msgs.length - 1].remove();
-        }
-
-        function formatJDResult(data, method) {
-            let html = `<strong>📋 JD 解析结果</strong> <span style="font-size:11px;color:#999;">（${method}）</span><br><br>`;
-            if (data.position) html += `<strong>职位：</strong>${data.position}<br>`;
-            if (data.company) html += `<strong>公司：</strong>${data.company}<br>`;
-            if (data.location) html += `<strong>地点：</strong>${data.location}<br>`;
-            if (data.salary) html += `<strong>薪资：</strong>${data.salary}<br>`;
-            if (data.responsibilities?.length) { html += `<br><strong>岗位职责：</strong><ul>`; data.responsibilities.forEach(i => html += `<li>${i}</li>`); html += `</ul>`; }
-            if (data.requirements?.length) { html += `<strong>任职要求：</strong><ul>`; data.requirements.forEach(i => html += `<li>${i}</li>`); html += `</ul>`; }
-            if (data.benefits?.length) html += `<strong>福利待遇：</strong>${data.benefits.join('、')}`;
-            return html;
-        }
-
-        function addMessage(content, type) {
+        function createStreamMessage() {
             const chatMessages = document.getElementById('chatMessages');
+            const id = 'stream-' + (++streamMessageCounter);
             const div = document.createElement('div');
-            div.className = `message ${type}`;
-            const avatar = type === 'ai' ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-            div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-content"><p>${content}</p></div>`;
+            div.id = id;
+            div.className = 'message ai';
+            div.innerHTML = `
+                <div class="message-avatar">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                    </svg>
+                </div>
+                <div class="message-body">
+                    <div class="message-thinking" id="${id}-thinking" style="display: none;">
+                        <div class="thinking-header">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                            <span>思考过程</span>
+                            <span class="thinking-toggle">点击展开/折叠</span>
+                        </div>
+                        <div class="thinking-content" id="${id}-thinking-content"></div>
+                    </div>
+                    <div class="message-content" id="${id}-content">
+                        <span class="typing-cursor">▊</span>
+                    </div>
+                </div>
+            `;
             chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return id;
+        }
+
+        function updateStreamMessage(id, thinking, content, isThinking) {
+            const thinkingDiv = document.getElementById(id + '-thinking');
+            const thinkingContent = document.getElementById(id + '-thinking-content');
+            const contentDiv = document.getElementById(id + '-content');
+
+            if (thinking && thinkingDiv) {
+                thinkingDiv.style.display = 'block';
+                thinkingContent.textContent = thinking;
+            }
+
+            if (content && contentDiv) {
+                contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>') + '<span class="typing-cursor">▊</span>';
+            }
+
+            // 滚动到底部
+            const chatMessages = document.getElementById('chatMessages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function generateAIResponse(msg) {
-            if (msg.includes('生成') || msg.includes('简历')) { generateDemoResume(); return '好的，正在为您生成简历...请查看右侧预览区域。'; }
-            const r = { '优化': '好的，我来帮您优化简历。请告诉我您想优化哪个部分？\n\n1. <strong>工作经历</strong> - 让描述更有说服力\n2. <strong>技能清单</strong> - 匹配目标岗位\n3. <strong>个人简介</strong> - 更简洁有力', '关键词': '我来帮您分析目标岗位的关键词。请提供目标职位名称或职位描述。', '格式': '关于简历格式，我建议：\n\n• 使用清晰的层次结构\n• 保持一致的字体和间距\n• 控制在1-2页为宜', 'default': '我理解您的需求。请提供更多信息：\n\n1. 您的目标岗位是什么？\n2. 您想重点优化哪部分内容？' };
-            for (let k in r) { if (msg.includes(k)) return r[k]; }
-            return r['default'];
+        function finalizeStreamMessage(id, thinking, content) {
+            const thinkingDiv = document.getElementById(id + '-thinking');
+            const contentDiv = document.getElementById(id + '-content');
+
+            if (!thinking && thinkingDiv) {
+                thinkingDiv.remove();
+            }
+
+            if (contentDiv) {
+                contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
+            }
+
+            // 使 thinking 可点击折叠
+            if (thinking && thinkingDiv) {
+                thinkingDiv.onclick = function() {
+                    this.classList.toggle('collapsed');
+                };
+            }
+        }
+
+        function addMessage(content, type, thinking = '') {
+            const chatMessages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            const id = 'msg-' + Date.now();
+            div.id = id;
+            const avatar = type === 'ai' ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>' : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+            // XSS 防御：先转义再转换换行符
+            const formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
+
+            // 构建 thinking 部分（独立思考框）
+            let thinkingHtml = '';
+            if (thinking && type === 'ai') {
+                const safeThinking = escapeHtml(thinking);
+                thinkingHtml = `<div class="message-thinking" onclick="this.classList.toggle('collapsed')">
+                    <div class="thinking-header">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                        <span>思考过程</span>
+                        <span class="thinking-toggle">点击展开/折叠</span>
+                    </div>
+                    <div class="thinking-content">${safeThinking}</div>
+                </div>`;
+            }
+
+            // 使用新的结构：message-body 包含 thinking 和 content
+            if (type === 'ai') {
+                div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-body">${thinkingHtml}<div class="message-content"><p>${formattedContent}</p></div></div>`;
+            } else {
+                div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-body"><div class="message-content"><p>${formattedContent}</p></div></div>`;
+            }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return id;
+        }
+
+        function addLoadingMessage() {
+            const chatMessages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            const id = 'loading-' + Date.now();
+            div.id = id;
+            div.className = 'message ai';
+            div.innerHTML = `<div class="message-avatar"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div><div class="message-content"><p>思考中...</p></div>`;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
         }
 
         function handleKeyDown(e) {
@@ -654,59 +1427,167 @@
 
         function clearChat() {
             if (confirm('确定要清空聊天记录吗？')) {
-                document.getElementById('chatMessages').innerHTML = '';
-                addMessage('聊天记录已清空。请告诉我您需要什么帮助？', 'ai');
+                // 保留开场白，删除其他消息
+                const chatMessages = document.getElementById('chatMessages');
+                const firstMessage = chatMessages.firstElementChild;
+                chatMessages.innerHTML = '';
+                if (firstMessage) {
+                    chatMessages.appendChild(firstMessage);
+                }
+                chatHistory = [];
             }
         }
 
+        let selectedFormat = 'html';
+
         function exportResume() {
+            if (!hasResume) {
+                showToast('请先通过AI助手生成简历', 'error');
+                return;
+            }
+            // 获取用户姓名作为默认文件名
+            const nameEl = document.querySelector('.resume-name');
+            const defaultName = nameEl ? nameEl.textContent.trim() : '简历';
+            document.getElementById('exportFilename').value = defaultName || '简历';
+            selectFormat('html');
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function selectFormat(format) {
+            selectedFormat = format;
+            // 更新格式选项样式
+            document.querySelectorAll('.format-option').forEach(el => {
+                el.classList.toggle('active', el.dataset.format === format);
+            });
+            // 更新文件扩展名
+            document.getElementById('filenameExt').textContent = '.' + format;
+        }
+
+        async function confirmExport() {
+            const filename = document.getElementById('exportFilename').value.trim();
+            if (!filename) {
+                showToast('请输入文件名', 'error');
+                return;
+            }
+
+            const btn = document.querySelector('.modal-footer .btn-primary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 导出中...';
+            btn.disabled = true;
+
+            try {
+                if (selectedFormat === 'html') {
+                    // HTML 格式：前端直接生成
+                    await exportHTML(filename);
+                } else {
+                    // PDF/DOCX 格式：调用后端 API
+                    await exportFromBackend(filename, selectedFormat);
+                }
+                showToast('导出成功');
+                closeExportModal();
+            } catch (err) {
+                showToast('导出失败：' + err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function exportHTML(filename) {
             const preview = document.getElementById('resumePreview');
-            const content = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>我的简历</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333;line-height:1.6;}h1{text-align:center;margin-bottom:4px;}h2{border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:20px;}.subtitle{text-align:center;color:#666;font-size:14px;}.contact{text-align:center;color:#999;font-size:12px;margin-bottom:20px;}ul{padding-left:20px;}li{margin-bottom:4px;}</style></head><body>${preview.innerHTML}</body></html>`;
-            const blob = new Blob([content], { type: 'text/html' });
+            const content = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${filename}的简历</title><style>body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333;line-height:1.6;}h1{text-align:center;margin-bottom:4px;font-size:28px;}h2{border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:24px;font-size:16px;}.subtitle{text-align:center;color:#666;font-size:14px;}.contact{text-align:center;color:#999;font-size:12px;margin-bottom:20px;}.contact span{margin:0 8px;}.resume-item{margin-bottom:14px;}.resume-item-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}.resume-item-title{font-size:14px;font-weight:600;}.resume-item-date{font-size:12px;color:#999;}.resume-item-subtitle{font-size:13px;color:#666;margin-bottom:6px;}.resume-item-desc{font-size:13px;color:#666;line-height:1.6;}ul{padding-left:20px;}li{margin-bottom:4px;}</style></head><body>${preview.innerHTML}</body></html>`;
+            const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+            downloadBlob(blob, filename + '.html');
+        }
+
+        async function exportFromBackend(filename, format) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                throw new Error('请先登录');
+            }
+            const url = `${API_BASE}/resume/export?format=${format}&filename=${encodeURIComponent(filename)}`;
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+                throw new Error('登录已过期，请重新登录');
+            }
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.detail || '导出失败');
+            }
+
+            const blob = await res.blob();
+            const ext = format === 'pdf' ? '.pdf' : '.docx';
+            downloadBlob(blob, filename + ext);
+        }
+
+        function downloadBlob(blob, filename) {
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = '简历.html'; a.click();
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
 
         function showHelp() {
-            alert('使用指南：\n\n1. 在左侧聊天区输入"生成简历"，AI会自动生成示例简历\n2. 右侧实时预览简历内容\n3. 点击「编辑」Tab可直接编辑简历内容\n4. 点击「历史」Tab查看保存版本\n5. 使用缩放按钮调整预览大小\n6. 点击「导出」按钮下载简历为HTML文件');
+            alert('使用指南：\n\n1. 在左侧聊天区输入"生成简历"，AI会自动生成示例简历\n2. 右侧实时预览简历内容\n3. 点击「编辑」Tab可直接编辑简历内容\n4. 点击「历史」Tab查看保存版本\n5. 使用缩放按钮调整预览大小\n6. 点击「导出」按钮可导出简历为 HTML/PDF/DOCX 格式');
         }
 
         function uploadResume() {
             const fileInput = document.createElement('input');
             fileInput.type = 'file'; fileInput.accept = '.pdf,.docx'; fileInput.style.display = 'none';
             document.body.appendChild(fileInput);
-            fileInput.onchange = async function() {
+            fileInput.onchange = function() {
                 const file = fileInput.files[0]; if (!file) return;
                 const ext = '.' + file.name.split('.').pop().toLowerCase();
-                if (!['.pdf', '.docx'].includes(ext)) { showToast('仅支持 PDF 和 DOCX 格式', 'error'); document.body.removeChild(fileInput); return; }
-                if (file.size > 10 * 1024 * 1024) { showToast('文件过大，最大支持 10MB', 'error'); document.body.removeChild(fileInput); return; }
-                addMessage(`📎 正在上传：${file.name}`, 'ai');
-                const formData = new FormData(); formData.append('file', file);
-                try {
-                    const token = localStorage.getItem('token');
-                    const res = await fetch(`${API_BASE}/tools/upload-resume`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.detail || '上传失败');
-                    hasResume = true; document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
-                    removeLastAIMessage(); addMessage('✅ 简历上传解析成功！已更新到预览区。', 'ai'); showToast('简历上传成功');
-                } catch (err) { removeLastAIMessage(); addMessage(`❌ 上传失败：${err.message}`, 'ai'); showToast(err.message, 'error'); }
+                if (!['.pdf', '.docx'].includes(ext)) {
+                    showToast('仅支持 PDF 和 DOCX 格式', 'error');
+                    document.body.removeChild(fileInput);
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('文件过大，最大支持 10MB', 'error');
+                    document.body.removeChild(fileInput);
+                    return;
+                }
+                // 存储文件并显示状态
+                uploadedFile = file;
+                document.getElementById('uploadFileName').textContent = file.name;
+                document.getElementById('uploadStatus').style.display = 'block';
+                showToast('文件已添加，点击发送后由 AI 处理');
                 document.body.removeChild(fileInput);
             };
             fileInput.click();
         }
 
+        function removeUploadedFile() {
+            uploadedFile = null;
+            document.getElementById('uploadStatus').style.display = 'none';
+        }
+
         function voiceInput() { alert('语音输入功能开发中...'); }
 
-        function zoomIn() {
+        function zoom(delta) {
             const p = document.getElementById('resumePreview');
             const s = p.style.transform ? parseFloat(p.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            p.style.transform = `scale(${Math.min(s + 0.1, 1.5)})`; p.style.transformOrigin = 'top center';
-        }
-        function zoomOut() {
-            const p = document.getElementById('resumePreview');
-            const s = p.style.transform ? parseFloat(p.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            p.style.transform = `scale(${Math.max(s - 0.1, 0.5)})`; p.style.transformOrigin = 'top center';
+            const clamped = Math.min(Math.max(s + delta, 0.5), 1.5);
+            p.style.transform = `scale(${clamped})`;
+            p.style.transformOrigin = 'top center';
         }
 
         function switchTab(tabName) {
@@ -742,35 +1623,69 @@
                     historyList.innerHTML = `<div class="history-empty"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg><p>暂无历史版本</p><p style="font-size:11px;margin-top:4px;">保存简历后将自动记录历史版本</p></div>`;
                     return;
                 }
-                historyList.innerHTML = history.map(item => {
+
+                // 添加清空按钮
+                let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                    <button class="history-btn" title="清空所有历史" onclick="clearAllHistory()" style="width:auto;padding:6px 12px;font-size:12px;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right:4px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        清空历史
+                    </button>
+                </div>`;
+
+                html += history.map(item => {
                     const date = new Date(item.created_at);
                     const timeStr = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
                     const fields = item.changed_fields.map(f => ({ basic_info: '基本信息', education: '教育经历', internship_exp: '实习经历', project_exp: '项目经历', personal_strengths: '个人优势' }[f] || f)).join('、');
+                    const displayName = escapeHtml(item.name) || `${dateStr} ${timeStr}`;
+                    const safeFields = escapeHtml(fields);
                     return `
                         <div class="history-item">
                             <div class="history-item-info" onclick="restoreVersion(${item.id})">
-                                <div class="history-item-time">${dateStr} ${timeStr}</div>
-                                <div class="history-item-date">变更：${fields}</div>
+                                <div class="history-item-time">${displayName}</div>
+                                <div class="history-item-date">变更：${safeFields}</div>
                             </div>
                             <div class="history-item-actions">
                                 <button class="history-btn" title="恢复" onclick="event.stopPropagation(); restoreVersion(${item.id})">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                                 </button>
+                                <button class="history-btn" title="删除" onclick="event.stopPropagation(); deleteHistoryItem(${item.id})" style="color:#ef4444;">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                </button>
                             </div>
                         </div>`;
                 }).join('');
-            } catch (err) { historyList.innerHTML = `<div class="history-empty"><p>加载失败：${err.message}</p></div>`; }
+                historyList.innerHTML = html;
+            } catch (err) { historyList.innerHTML = `<div class="history-empty"><p>加载失败：${escapeHtml(err.message)}</p></div>`; }
         }
 
         async function restoreVersion(historyId) {
             if (!confirm('确定要恢复到此版本吗？')) return;
             try {
-                const data = await apiFetch(`/resume/history/${historyId}/restore`, { method: 'POST' });
+                const data = await apiFetch(`/resume/history/${encodeURIComponent(historyId)}/restore`, { method: 'POST' });
                 hasResume = true;
+                currentResumeData = data;
                 document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
                 switchTab('preview');
                 showToast('已恢复到历史版本');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function deleteHistoryItem(historyId) {
+            if (!confirm('确定要删除这条历史记录吗？')) return;
+            try {
+                await apiFetch(`/resume/history/${encodeURIComponent(historyId)}`, { method: 'DELETE' });
+                showToast('已删除');
+                loadHistory(); // 重新加载列表
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function clearAllHistory() {
+            if (!confirm('确定要清空所有历史记录吗？此操作不可恢复。')) return;
+            try {
+                await apiFetch('/resume/history', { method: 'DELETE' });
+                showToast('已清空所有历史记录');
+                loadHistory(); // 重新加载列表
             } catch (err) { showToast(err.message, 'error'); }
         }
 

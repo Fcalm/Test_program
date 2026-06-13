@@ -217,7 +217,7 @@
             accent-color: var(--gray-900);
         }
 
-        .remember-me label {
+        .remember-me span {
             font-size: 13px;
             color: var(--gray-600);
             cursor: pointer;
@@ -415,7 +415,7 @@
                 <div class="form-options">
                     <label class="remember-me">
                         <input type="checkbox" id="remember">
-                        <label for="remember">记住我</label>
+                        <span>记住我</span>
                     </label>
                     <a href="#" class="forgot-password">忘记密码？</a>
                 </div>
@@ -513,8 +513,6 @@
 
                 // 登录成功，保存 token 和用户信息
                 localStorage.setItem('token', data.access_token);
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('username', username);
 
                 // 获取用户详细信息
                 const userRes = await fetch(`${API_BASE}/auth/me`, {
@@ -545,9 +543,13 @@
 
         // 检查是否已登录
         window.addEventListener('load', function() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = 'index.html';
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    window.location.href = 'index.html';
+                }
+            } catch (err) {
+                console.error('检查登录状态失败:', err);
             }
         });
     </script>

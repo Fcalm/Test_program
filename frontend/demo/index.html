@@ -616,7 +616,6 @@
                 if (!response.ok) {
                     // token 无效或过期，清除登录状态
                     localStorage.removeItem('token');
-                    localStorage.removeItem('isLoggedIn');
                     window.location.href = 'login.html';
                     return false;
                 }
@@ -647,9 +646,7 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('token');
-            localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userEmail');
-            localStorage.removeItem('username');
             localStorage.removeItem('surveyCompleted');
             localStorage.removeItem('surveyAnswers');
             window.location.href = 'login.html';
@@ -657,9 +654,10 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
             if (window.innerWidth <= 768) {
                 sidebar.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
             }
         }
 
@@ -686,7 +684,7 @@
         });
 
         // 页面加载时检查登录状态
-        window.addEventListener('load', checkLogin);
+        window.addEventListener('load', () => checkLogin().catch(() => {}));
     </script>
 </body>
 </html>

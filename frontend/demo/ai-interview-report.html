@@ -806,14 +806,6 @@
 
         // ===== 加载报告数据 =====
         async function loadReport(sessionId) {
-            // TODO: 后端 API 接入后替换此处
-            // const token = localStorage.getItem('token');
-            // const res = await fetch(`${API_BASE}/interview/${sessionId}/report`, {
-            //     headers: { 'Authorization': `Bearer ${token}` }
-            // });
-            // if (!res.ok) throw new Error('加载失败');
-            // const data = await res.json();
-
             // 模拟网络延迟
             await new Promise(r => setTimeout(r, 600));
             const data = getMockReport(sessionId);
