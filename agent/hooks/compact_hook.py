@@ -191,7 +191,7 @@ class CompactHook(BaseHook):
             stage=old_state.stage,
             messages=compacted_messages,
             tool_results=old_state.tool_results,  # 保留已解析的 JD/简历
-            compact_count=old_state.compact_count,  # 保留熔断器计数
+            # compact_count 归 0：压缩成功重置熔断器
         )
 
     def _handle_failure(self, state: AgentState) -> None:
