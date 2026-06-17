@@ -2,11 +2,10 @@
 
 按照 harness.md 的压缩流程实现：
 
-成功路径 (Step 3a)：
-    组合新上下文 = system + 摘要 + 最近 3 轮 → 重置 usage → 继续正常流程
+成功路径：新建 state + 注入压缩后消息（天然干净，无遗漏）
+失败路径：compact_count +1 → 丢弃 10% → 重试 → >3 次中断
 
-失败路径 (Step 3b)：
-    检查空间 → 丢弃 10% → 熔断器 +1 → 重试 → 熔断器 > 3 → 抛出错误
+熔断器使用 state.compact_count，持久化到 DB。
 """
 
 from __future__ import annotations
@@ -24,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 # === 阈值配置 ===
 COMPACT_THRESHOLD = 0.75  # 75% 触发压缩
+COMPACT_MAX_RETRIES = 3   # 熔断器上限
 
 CONTEXT_LIMITS = {
     "deepseek-v4-flash": 128_000,
@@ -31,41 +31,11 @@ CONTEXT_LIMITS = {
 }
 
 
-# === 熔断器 ===
+# === 错误 ===
 
 class CompactError(Exception):
     """压缩错误（熔断器中断时抛出）"""
     pass
-
-
-class CompactCircuitBreaker:
-    """压缩熔断器（harness.md 定义）
-
-    - 每次压缩失败计数 +1
-    - 计数 > max_retries 时中断压缩，抛出异常
-    - 压缩成功后重置计数
-    """
-
-    def __init__(self, max_retries: int = 3) -> None:
-        self.max_retries = max_retries
-        self.count: int = 0
-
-    def record_failure(self) -> None:
-        """记录一次压缩失败"""
-        self.count += 1
-        logger.warning("CompactCircuitBreaker: 失败计数 %d/%d", self.count, self.max_retries)
-        if self.count > self.max_retries:
-            raise CompactError(
-                "上下文压缩失败次数超限，请缩短对话或重新开始会话"
-            )
-
-    def record_success(self) -> None:
-        """压缩成功，重置计数"""
-        self.count = 0
-
-    def reset(self) -> None:
-        """重置熔断器"""
-        self.count = 0
 
 
 # === Token 计数 ===
@@ -113,12 +83,12 @@ class CompactHook(BaseHook):
 
     按照 harness.md 流程：
     - should_trigger: 消息数 >= 6 且 token >= 75% 阈值
-    - execute: 压缩循环（成功→重置usage，失败→丢弃+熔断器+重试）
+    - execute: 压缩循环（成功→新建state，失败→丢弃+重试→>3中断）
+    - 熔断器使用 state.compact_count（持久化）
     """
 
     def __init__(self, model: str = "deepseek-v4-flash") -> None:
         self._model = model
-        self._circuit_breaker = CompactCircuitBreaker()
 
     @property
     def name(self) -> str:
@@ -143,34 +113,29 @@ class CompactHook(BaseHook):
 
         return estimated >= threshold
 
-    async def execute(self, state: AgentState) -> AgentState | None:
-        """执行压缩循环（harness.md 流程）
+    async def execute(self, state: AgentState) -> AgentState:
+        """执行压缩循环
 
-        循环：
-        1. 尝试调用 LLM 压缩
-        2. 成功 → 组合新上下文 + 重置 usage → 返回
-        3. 失败 → 检查空间 → 丢弃 10% → 熔断器 +1 → 重试
-        4. 熔断器 > 3 → 抛出 CompactError
+        成功：新建 state + 注入压缩消息 → 返回新 state
+        失败：compact_count +1 → 丢弃 10% → 重试 → >3 次抛出 CompactError
         """
         logger.info("CompactHook 触发压缩")
 
         while True:
             try:
-                # Step 1 + Step 2: 调用 LLM 压缩
+                # Step 1 + 2: 调用 LLM 压缩
                 summary = await self._call_llm_compact(state)
 
-                # Step 3a: 成功路径
-                self._apply_compact_result(state, summary)
-                self._circuit_breaker.record_success()
-                logger.info("CompactHook 压缩成功，消息数=%d", len(state.messages))
-                return state
+                # Step 3a: 成功 → 新建 state
+                new_state = self._create_compacted_state(state, summary)
+                logger.info("CompactHook 压缩成功，新消息数=%d", len(new_state.messages))
+                return new_state
 
             except CompactError:
-                # 熔断器中断，直接抛出
                 raise
 
             except Exception as e:
-                # Step 3b: 失败路径
+                # Step 3b: 失败处理
                 logger.error("CompactHook 压缩失败: %s", e)
                 self._handle_failure(state)
 
@@ -201,34 +166,47 @@ class CompactHook(BaseHook):
 
         return summary
 
-    def _apply_compact_result(self, state: AgentState, summary: str) -> None:
-        """应用压缩结果（成功路径 Step 3a）
+    def _create_compacted_state(self, old_state: AgentState, summary: str) -> AgentState:
+        """新建 state + 注入压缩后的消息
 
-        组合新上下文 = 摘要 + 最近 3 轮
-        重置 usage
+        保留：session_id, user_id, scenario, tool_results
+        重建：messages, usage, turn_count, compact_count（保留原值）
         """
-        # 保留最近 3 轮对话（6 条消息）
-        recent_messages = state.messages[-6:] if len(state.messages) > 6 else state.messages
+        from agent.core.state import AgentState
 
-        # 组合新上下文
-        state.messages = [
+        # 保留最近 3 轮对话（6 条消息）
+        recent_messages = old_state.messages[-6:] if len(old_state.messages) > 6 else old_state.messages
+
+        # 组合压缩后消息
+        compacted_messages = [
             {"role": "system", "content": f"[对话摘要]\n{summary}"},
             *recent_messages,
         ]
 
-        # 重置 usage
-        state.usage = {}
+        # 新建 state（天然干净，无遗漏）
+        return AgentState(
+            session_id=old_state.session_id,
+            user_id=old_state.user_id,
+            scenario=old_state.scenario,
+            stage=old_state.stage,
+            messages=compacted_messages,
+            tool_results=old_state.tool_results,  # 保留已解析的 JD/简历
+            compact_count=old_state.compact_count,  # 保留熔断器计数
+        )
 
     def _handle_failure(self, state: AgentState) -> None:
-        """处理压缩失败（失败路径 Step 3b）
+        """处理压缩失败
 
-        1. 压缩失败 → 增加 compact_count（失败计数）
-        2. 检查：压缩所需空间 + 当前 usage > 上限？
-        3. 超过上限 → 丢弃最早 10% 消息
-        4. 熔断器 +1（可能抛出 CompactError）
+        1. compact_count +1（可能抛出 CompactError）
+        2. 检查空间
+        3. 丢弃最早 10% 消息（如果空间不足）
         """
-        # 增加失败计数
+        # 熔断器：compact_count +1，超过上限抛出异常
         state.increment_compact()
+        if state.compact_count > COMPACT_MAX_RETRIES:
+            raise CompactError(
+                "上下文压缩失败次数超限，请缩短对话或重新开始会话"
+            )
 
         # 检查空间
         limit = get_context_limit(self._model)
@@ -243,6 +221,3 @@ class CompactHook(BaseHook):
                 "CompactHook 空间不足，丢弃 %d 条消息，剩余 %d 条",
                 discard_count, len(state.messages),
             )
-
-        # 熔断器 +1（超过阈值会抛出 CompactError）
-        self._circuit_breaker.record_failure()
