@@ -1,12 +1,25 @@
-"""数据库工具 - 简历读写"""
+"""数据库工具 - 通用读写"""
 
 import json
 from agent.tools.basetool import BaseTool
 from agent.tools.registry import registry
 
 
+# 支持的表及其字段定义
+TABLE_SCHEMAS = {
+    "resumes": {
+        "key_field": "user_id",
+        "fields": ["basic_info", "education", "internship_exp", "project_exp", "personal_strengths"],
+    },
+    "agent_sessions": {
+        "key_field": "id",
+        "fields": ["scenario", "stage", "messages", "tool_results", "usage", "turn_count", "error"],
+    },
+}
+
+
 class ReadDBTool(BaseTool):
-    """从数据库读取用户简历"""
+    """从数据库读取指定表的数据"""
 
     @property
     def name(self) -> str:
@@ -14,14 +27,26 @@ class ReadDBTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "从数据库读取当前用户的简历数据。返回简历的各个模块（基本信息、教育经历、实习经历、项目经历、个人优势）。"
+        tables = ", ".join(TABLE_SCHEMAS.keys())
+        return f"从数据库读取指定表的数据。支持的表：{tables}。"
 
     @property
     def parameters(self) -> dict:
         return {
             "type": "object",
-            "properties": {},
-            "required": []
+            "properties": {
+                "table_name": {
+                    "type": "string",
+                    "description": "表名",
+                    "enum": list(TABLE_SCHEMAS.keys())
+                },
+                "query": {
+                    "type": "object",
+                    "description": "查询条件（键值对）",
+                    "additionalProperties": True
+                }
+            },
+            "required": ["table_name", "query"]
         }
 
     @property
@@ -30,35 +55,47 @@ class ReadDBTool(BaseTool):
 
     @property
     def scenarios(self) -> list[str]:
-        return ["resume", "interview", "job_find", "analysis"]
+        return []  # 通用
 
     async def execute(self, **kwargs) -> str:
-        """读取简历"""
+        """读取指定表的数据"""
         from backend.database import async_session_maker
-        from backend.services.resume import get_resume
+        from sqlalchemy import select, text
 
-        user_id = kwargs.get("user_id")
-        if not user_id:
-            return json.dumps({"success": False, "error": "缺少 user_id"}, ensure_ascii=False)
+        table_name = kwargs.get("table_name")
+        query = kwargs.get("query", {})
 
+        if table_name not in TABLE_SCHEMAS:
+            return json.dumps({"success": False, "error": f"不支持的表：{table_name}"}, ensure_ascii=False)
+
+        schema = TABLE_SCHEMAS[table_name]
+
+        # 构建查询
         async with async_session_maker() as db:
-            resume = await get_resume(db, user_id)
+            # 使用原生 SQL 查询（通用方案）
+            where_clauses = []
+            params = {}
+            for key, value in query.items():
+                where_clauses.append(f"{key} = :{key}")
+                params[key] = value
 
-            if not resume:
-                return json.dumps({"success": True, "data": None, "message": "暂无简历数据"}, ensure_ascii=False)
+            where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
+            sql = f"SELECT * FROM {table_name} WHERE {where_str}"
 
-            data = {
-                "basic_info": resume.basic_info,
-                "education": resume.education,
-                "internship_exp": resume.internship_exp,
-                "project_exp": resume.project_exp,
-                "personal_strengths": resume.personal_strengths,
-            }
-            return json.dumps({"success": True, "data": data}, ensure_ascii=False)
+            result = await db.execute(text(sql), params)
+            rows = result.mappings().all()
+
+            if not rows:
+                return json.dumps({"success": True, "data": [], "message": "未找到数据"}, ensure_ascii=False)
+
+            # 转换为 dict 列表
+            data = [dict(row) for row in rows]
+
+            return json.dumps({"success": True, "data": data}, ensure_ascii=False, default=str)
 
 
 class EditDBTool(BaseTool):
-    """创建或更新用户简历"""
+    """创建或更新指定表的数据"""
 
     @property
     def name(self) -> str:
@@ -66,40 +103,31 @@ class EditDBTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "创建或更新用户简历。支持部分更新（只传需要修改的字段）。可更新字段：basic_info, education, internship_exp, project_exp, personal_strengths。"
+        tables = ", ".join(TABLE_SCHEMAS.keys())
+        return f"创建或更新指定表的数据。支持的表：{tables}。"
 
     @property
     def parameters(self) -> dict:
         return {
             "type": "object",
             "properties": {
-                "basic_info": {
+                "table_name": {
+                    "type": "string",
+                    "description": "表名",
+                    "enum": list(TABLE_SCHEMAS.keys())
+                },
+                "query": {
                     "type": "object",
-                    "description": "基本信息（姓名、邮箱、电话等）",
+                    "description": "查询条件（用于定位记录）",
                     "additionalProperties": True
                 },
-                "education": {
-                    "type": "array",
-                    "description": "教育经历列表",
-                    "items": {"type": "object", "additionalProperties": True}
-                },
-                "internship_exp": {
-                    "type": "array",
-                    "description": "实习经历列表",
-                    "items": {"type": "object", "additionalProperties": True}
-                },
-                "project_exp": {
-                    "type": "array",
-                    "description": "项目经历列表",
-                    "items": {"type": "object", "additionalProperties": True}
-                },
-                "personal_strengths": {
-                    "type": "array",
-                    "description": "个人优势列表",
-                    "items": {"type": "string"}
+                "data": {
+                    "type": "object",
+                    "description": "要更新的数据（键值对）",
+                    "additionalProperties": True
                 }
             },
-            "required": []
+            "required": ["table_name", "query", "data"]
         }
 
     @property
@@ -108,44 +136,69 @@ class EditDBTool(BaseTool):
 
     @property
     def scenarios(self) -> list[str]:
-        return ["resume"]
+        return []  # 通用
 
     async def execute(self, **kwargs) -> str:
-        """创建或更新简历"""
+        """创建或更新指定表的数据"""
         from backend.database import async_session_maker
-        from backend.services.resume import get_resume, create_resume, update_resume
+        from sqlalchemy import text
 
-        user_id = kwargs.get("user_id")
-        if not user_id:
-            return json.dumps({"success": False, "error": "缺少 user_id"}, ensure_ascii=False)
+        table_name = kwargs.get("table_name")
+        query = kwargs.get("query", {})
+        data = kwargs.get("data", {})
 
-        # 提取要更新的字段（只取非 None 的）
-        update_data = {
-            k: v for k, v in kwargs.items()
-            if k != "user_id" and v is not None
-        }
+        if table_name not in TABLE_SCHEMAS:
+            return json.dumps({"success": False, "error": f"不支持的表：{table_name}"}, ensure_ascii=False)
 
-        if not update_data:
+        if not data:
             return json.dumps({"success": False, "error": "没有提供要更新的数据"}, ensure_ascii=False)
 
-        async with async_session_maker() as db:
-            resume = await get_resume(db, user_id)
+        schema = TABLE_SCHEMAS[table_name]
 
-            if resume:
-                # 更新现有简历
-                await update_resume(db, resume, update_data)
+        async with async_session_maker() as db:
+            # 先检查记录是否存在
+            where_clauses = []
+            params = {}
+            for key, value in query.items():
+                where_clauses.append(f"{key} = :{key}")
+                params[key] = value
+
+            where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
+            check_sql = f"SELECT COUNT(*) as cnt FROM {table_name} WHERE {where_str}"
+            result = await db.execute(text(check_sql), params)
+            exists = result.scalar() > 0
+
+            if exists:
+                # 更新
+                set_clauses = []
+                update_params = dict(params)
+                for key, value in data.items():
+                    set_clauses.append(f"{key} = :set_{key}")
+                    update_params[f"set_{key}"] = value
+
+                set_str = ", ".join(set_clauses)
+                update_sql = f"UPDATE {table_name} SET {set_str} WHERE {where_str}"
+                await db.execute(text(update_sql), update_params)
+                await db.commit()
+
                 return json.dumps({
                     "success": True,
-                    "message": "简历已更新",
-                    "updated_fields": list(update_data.keys())
+                    "message": f"{table_name} 已更新",
+                    "updated_fields": list(data.keys())
                 }, ensure_ascii=False)
             else:
-                # 创建新简历
-                await create_resume(db, user_id, update_data)
+                # 插入
+                all_data = {**query, **data}
+                columns = ", ".join(all_data.keys())
+                placeholders = ", ".join(f":{k}" for k in all_data.keys())
+                insert_sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+                await db.execute(text(insert_sql), all_data)
+                await db.commit()
+
                 return json.dumps({
                     "success": True,
-                    "message": "简历已创建",
-                    "created_fields": list(update_data.keys())
+                    "message": f"{table_name} 已创建",
+                    "created_fields": list(all_data.keys())
                 }, ensure_ascii=False)
 
 
