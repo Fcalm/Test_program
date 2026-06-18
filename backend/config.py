@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # OpenAI / DeepSeek
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.deepseek.com"
+    LLM_MODEL: str = "deepseek-v4-flash"
+
     @property
     def DATABASE_URL(self) -> str:
         return (

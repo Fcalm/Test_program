@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.database import create_tables
 from backend.routers.auth import router as auth_router
 from backend.routers.resume import router as resume_router
+from backend.routers.files import router as files_router
 from backend.routers.tools import router as tools_router
 
 
@@ -34,6 +35,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(resume_router)
+app.include_router(files_router)
 app.include_router(tools_router)  # 临时：agent 开发后删除
 
 

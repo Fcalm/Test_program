@@ -27,4 +27,6 @@ async def create_tables():
     async with engine.begin() as conn:
         from backend.models.user import User  # noqa: F401
         from backend.models.resume import Resume, ResumeHistory  # noqa: F401
+        from backend.models.agent_session import AgentSession  # noqa: F401
+        from backend.models.uploaded_file import UploadedFile, FileText  # noqa: F401
         await conn.run_sync(Base.metadata.create_all)

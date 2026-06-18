@@ -949,6 +949,7 @@
         const API_BASE = 'http://localhost:8000';
         let hasResume = false;
         let uploadedFile = null; // 存储上传的简历文件
+        let uploadedFileId = null; // 存储上传后的文件 ID
         let currentResumeData = null; // 存储当前简历数据
 
         // XSS 防御：转义 HTML 特殊字符
@@ -1177,15 +1178,16 @@
             if (!message && !uploadedFile) return;
 
             let fullMessage = message;
+            let fileIds = [];
 
-            // 如果有上传的文件，先上传文件
+            // 如果有上传的文件，先上传到文件服务
             if (uploadedFile) {
                 const loadingId = addLoadingMessage();
                 try {
                     const formData = new FormData();
                     formData.append('file', uploadedFile);
                     const token = localStorage.getItem('token');
-                    const res = await fetch(`${API_BASE}/tools/upload-resume`, {
+                    const res = await fetch(`${API_BASE}/files/upload`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` },
                         body: formData
@@ -1193,19 +1195,18 @@
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.detail || '上传失败');
 
-                    // 将上传结果添加到消息中
-                    const fileInfo = `📎 已上传简历：${uploadedFile.name}`;
-                    fullMessage = fullMessage ? `${fileInfo}\n${message}` : fileInfo;
+                    // 保存 file_id
+                    fileIds.push(data.file_id);
+                    uploadedFileId = data.file_id;
 
-                    // 更新简历预览
-                    hasResume = true;
-                    currentResumeData = data;
-                    document.getElementById('resumePreview').innerHTML = renderResumeHTML(data);
+                    // 将上传结果添加到消息中
+                    const fileInfo = `📎 已上传文件：${uploadedFile.name}`;
+                    fullMessage = fullMessage ? `${fileInfo}\n${message}` : fileInfo;
 
                     removeMessage(loadingId);
                 } catch (err) {
                     removeMessage(loadingId);
-                    addMessage(`❌ 简历上传失败：${err.message}`, 'ai');
+                    addMessage(`❌ 文件上传失败：${err.message}`, 'ai');
                     showToast(err.message, 'error');
                     return;
                 } finally {
@@ -1235,8 +1236,9 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        message: fullMessage,
-                        history: chatHistory.slice(0, -1),
+                        message: message,  // 原始消息（不含文件信息）
+                        file_ids: fileIds,
+                        scenario: 'resume',
                     })
                 });
 
@@ -1577,6 +1579,7 @@
 
         function removeUploadedFile() {
             uploadedFile = null;
+            uploadedFileId = null;
             document.getElementById('uploadStatus').style.display = 'none';
         }
 
