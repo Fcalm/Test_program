@@ -38,10 +38,12 @@ class BaseAgent:
         scenario: str = "resume",
         user_id: int | None = None,
         session_id: str = "",
+        db=None,
     ):
         self.scenario = scenario
         self.user_id = user_id
         self.session_id = session_id
+        self.db = db
         self.state = AgentState(
             scenario=scenario,
             user_id=user_id,
@@ -161,7 +163,7 @@ class BaseAgent:
             else:
                 try:
                     # 注入 db 和 user_id 到工具执行上下文
-                    func_args["db"] = None  # 需要从外部传入
+                    func_args["db"] = self.db
                     func_args["user_id"] = self.user_id
                     result_content = await tool.execute(**func_args)
                 except Exception as e:

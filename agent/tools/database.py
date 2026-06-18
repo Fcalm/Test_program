@@ -5,19 +5,6 @@ from agent.tools.basetool import BaseTool
 from agent.tools.registry import registry
 
 
-# 支持的表及其字段定义
-TABLE_SCHEMAS = {
-    "resumes": {
-        "key_field": "user_id",
-        "fields": ["basic_info", "education", "internship_exp", "project_exp", "personal_strengths"],
-    },
-    "agent_sessions": {
-        "key_field": "id",
-        "fields": ["scenario", "stage", "messages", "tool_results", "usage", "turn_count", "error"],
-    },
-}
-
-
 class ReadDBTool(BaseTool):
     """从数据库读取指定表的数据"""
 
@@ -27,11 +14,13 @@ class ReadDBTool(BaseTool):
 
     @property
     def description(self) -> str:
+        from backend.services.db_service import TABLE_SCHEMAS
         tables = ", ".join(TABLE_SCHEMAS.keys())
         return f"从数据库读取指定表的数据。支持的表：{tables}。"
 
     @property
     def parameters(self) -> dict:
+        from backend.services.db_service import TABLE_SCHEMAS
         return {
             "type": "object",
             "properties": {
@@ -59,39 +48,17 @@ class ReadDBTool(BaseTool):
 
     async def execute(self, **kwargs) -> str:
         """读取指定表的数据"""
-        from backend.database import async_session_maker
-        from sqlalchemy import select, text
+        from backend.services.db_service import read_table
+
+        db = kwargs.get("db")
+        if not db:
+            return json.dumps({"success": False, "error": "缺少数据库连接"}, ensure_ascii=False)
 
         table_name = kwargs.get("table_name")
         query = kwargs.get("query", {})
 
-        if table_name not in TABLE_SCHEMAS:
-            return json.dumps({"success": False, "error": f"不支持的表：{table_name}"}, ensure_ascii=False)
-
-        schema = TABLE_SCHEMAS[table_name]
-
-        # 构建查询
-        async with async_session_maker() as db:
-            # 使用原生 SQL 查询（通用方案）
-            where_clauses = []
-            params = {}
-            for key, value in query.items():
-                where_clauses.append(f"{key} = :{key}")
-                params[key] = value
-
-            where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
-            sql = f"SELECT * FROM {table_name} WHERE {where_str}"
-
-            result = await db.execute(text(sql), params)
-            rows = result.mappings().all()
-
-            if not rows:
-                return json.dumps({"success": True, "data": [], "message": "未找到数据"}, ensure_ascii=False)
-
-            # 转换为 dict 列表
-            data = [dict(row) for row in rows]
-
-            return json.dumps({"success": True, "data": data}, ensure_ascii=False, default=str)
+        result = await read_table(db, table_name, query)
+        return json.dumps(result, ensure_ascii=False, default=str)
 
 
 class EditDBTool(BaseTool):
@@ -103,11 +70,13 @@ class EditDBTool(BaseTool):
 
     @property
     def description(self) -> str:
+        from backend.services.db_service import TABLE_SCHEMAS
         tables = ", ".join(TABLE_SCHEMAS.keys())
         return f"创建或更新指定表的数据。支持的表：{tables}。"
 
     @property
     def parameters(self) -> dict:
+        from backend.services.db_service import TABLE_SCHEMAS
         return {
             "type": "object",
             "properties": {
@@ -140,66 +109,18 @@ class EditDBTool(BaseTool):
 
     async def execute(self, **kwargs) -> str:
         """创建或更新指定表的数据"""
-        from backend.database import async_session_maker
-        from sqlalchemy import text
+        from backend.services.db_service import edit_table
+
+        db = kwargs.get("db")
+        if not db:
+            return json.dumps({"success": False, "error": "缺少数据库连接"}, ensure_ascii=False)
 
         table_name = kwargs.get("table_name")
         query = kwargs.get("query", {})
         data = kwargs.get("data", {})
 
-        if table_name not in TABLE_SCHEMAS:
-            return json.dumps({"success": False, "error": f"不支持的表：{table_name}"}, ensure_ascii=False)
-
-        if not data:
-            return json.dumps({"success": False, "error": "没有提供要更新的数据"}, ensure_ascii=False)
-
-        schema = TABLE_SCHEMAS[table_name]
-
-        async with async_session_maker() as db:
-            # 先检查记录是否存在
-            where_clauses = []
-            params = {}
-            for key, value in query.items():
-                where_clauses.append(f"{key} = :{key}")
-                params[key] = value
-
-            where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
-            check_sql = f"SELECT COUNT(*) as cnt FROM {table_name} WHERE {where_str}"
-            result = await db.execute(text(check_sql), params)
-            exists = result.scalar() > 0
-
-            if exists:
-                # 更新
-                set_clauses = []
-                update_params = dict(params)
-                for key, value in data.items():
-                    set_clauses.append(f"{key} = :set_{key}")
-                    update_params[f"set_{key}"] = value
-
-                set_str = ", ".join(set_clauses)
-                update_sql = f"UPDATE {table_name} SET {set_str} WHERE {where_str}"
-                await db.execute(text(update_sql), update_params)
-                await db.commit()
-
-                return json.dumps({
-                    "success": True,
-                    "message": f"{table_name} 已更新",
-                    "updated_fields": list(data.keys())
-                }, ensure_ascii=False)
-            else:
-                # 插入
-                all_data = {**query, **data}
-                columns = ", ".join(all_data.keys())
-                placeholders = ", ".join(f":{k}" for k in all_data.keys())
-                insert_sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-                await db.execute(text(insert_sql), all_data)
-                await db.commit()
-
-                return json.dumps({
-                    "success": True,
-                    "message": f"{table_name} 已创建",
-                    "created_fields": list(all_data.keys())
-                }, ensure_ascii=False)
+        result = await edit_table(db, table_name, query, data)
+        return json.dumps(result, ensure_ascii=False)
 
 
 # 注册工具
