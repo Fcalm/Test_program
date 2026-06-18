@@ -8,7 +8,7 @@ import json
 
 from backend.database import get_db
 from backend.models.user import User
-from backend.services.resume import get_resume
+from backend.services.resume_history import get_resume
 from backend.services.file_storage import get_file_text_for_agent
 from backend.services.agent_session import load_session, save_session
 from backend.utils.auth import get_current_user
@@ -77,11 +77,8 @@ async def _build_message_with_files(
 ) -> str:
     """构建注入文件内容后的用户消息
 
-    有文字说明时：
-        {user_text}\n\n[附件]\nfile_id=42 resume.pdf:\n{raw_text}
-
-    没有文字说明（只上传文件）：
-        用户上传了文件（file_id=42, resume.pdf），内容如下：\n\n{raw_text}
+    注入格式：
+        {user_text}\n\n<files>\n<file id="42" name="resume.pdf">\n{text}\n</file>\n</files>
     """
     if not file_ids:
         return user_text
@@ -91,17 +88,13 @@ async def _build_message_with_files(
     for file_id in file_ids:
         text = await get_file_text_for_agent(db, file_id, user.id, max_chars=8000)
         if text:
-            file_parts.append(f"[file_id={file_id}]\n{text}")
+            file_parts.append(f'<file id="{file_id}">\n{text}\n</file>')
 
     if not file_parts:
         return user_text
 
-    files_block = "\n\n".join(file_parts)
-
-    if user_text.strip():
-        return f"{user_text}\n\n[附件]\n{files_block}"
-    else:
-        return f"用户上传了文件，内容如下：\n\n{files_block}"
+    files_block = "\n".join(file_parts)
+    return f"{user_text}\n\n<files>\n{files_block}\n</files>"
 
 
 async def _load_or_create_state(
