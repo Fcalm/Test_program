@@ -2,25 +2,38 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import AsyncGenerator
 
 from agent.core.state import AgentState
 from agent.core.client import create_client, get_model
-from agent.prompts.build_prompt import build_system_prompt
+from agent.prompts.build_prompt import build_static_prompt, build_system_prompt
 from agent.tools.registry import registry
-from agent.hooks.compact_hook import CompactHook
+from agent.hooks.compact_hook import CompactHook, should_update_summary, update_summary
+from agent.hooks.compress_guard import CompressGuard
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 场景配置
-SCENARIO_CONFIGS = {
-    "resume": {"max_rounds": 10, "temperature": 0.4},
-    "interview": {"max_rounds": 5, "temperature": 0.7},
-    "job_find": {"max_rounds": 8, "temperature": 0.5},
-    "analysis": {"max_rounds": 5, "temperature": 0.3},
-}
+
+class _Ns:
+    """轻量 namespace 对象，用于构建 tool_calls 兼容结构"""
+    __slots__ = ("__dict__",)
+
+    def __init__(self, **kw):
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+
+def get_scenario_configs() -> dict:
+    """获取场景配置（从统一配置读取，支持运行时修改）"""
+    return settings.SCENARIO_CONFIGS
+
+
+# 向后兼容：模块级导出
+SCENARIO_CONFIGS = get_scenario_configs()
 
 
 class BaseAgent:
@@ -49,11 +62,16 @@ class BaseAgent:
             user_id=user_id,
             session_id=session_id,
         )
-        self._compact_hook = CompactHook(model=get_model())
+        self._guard = CompressGuard()
+        self._compact_hook = CompactHook(model=get_model(), guard=self._guard)
+
+        # 进入 loop 前构建静态 prompt（会话内不变）
+        self._static_prompt = build_static_prompt(scenario)
 
     @property
     def config(self) -> dict:
-        return SCENARIO_CONFIGS.get(self.scenario, SCENARIO_CONFIGS["resume"])
+        configs = settings.SCENARIO_CONFIGS
+        return configs.get(self.scenario, configs["resume"])
 
     @property
     def max_rounds(self) -> int:
@@ -72,22 +90,32 @@ class BaseAgent:
         Returns:
             messages 列表
         """
-        # 1. 构建 system prompt
+        # 1. 构建 system prompt（静态层 + 动态层）
         dynamic_context = {
+            "work": self.scenario,
             "tool_results": self.state.tool_results,
             "stage": self.state.stage,
         }
-        system_prompt = build_system_prompt(self.scenario, dynamic_context)
+        system_prompt = build_system_prompt(self._static_prompt, dynamic_context)
 
-        # 2. 组装消息
+        # 2. 若存在完整压缩摘要，合并到 system prompt 末尾
+        compact_summary = self.state.tool_results.get("_compact_summary")
+        if compact_summary:
+            system_prompt = f"{system_prompt}\n\n---\n\n[对话摘要]\n{compact_summary}"
+
+        # 3. 若存在滚动摘要（工作笔记），作为辅助上下文注入（不替换完整历史）
+        if self.state.summary:
+            system_prompt = f"{system_prompt}\n\n---\n\n[工作笔记]\n{self.state.summary}"
+
+        # 4. 组装消息
         messages = [{"role": "system", "content": system_prompt}]
 
-        # 3. 添加历史消息（排除 system）
+        # 5. 添加历史消息（排除 system）
         for msg in self.state.messages:
             if msg.get("role") != "system":
                 messages.append(msg)
 
-        # 4. 添加当前用户消息
+        # 6. 添加当前用户消息
         messages.append({"role": "user", "content": user_message})
 
         return messages
@@ -141,6 +169,68 @@ class BaseAgent:
         async for chunk in stream:
             yield chunk
 
+    # === 工具执行：重试 + 熔断 + 截断 ===
+
+    # 重试配置
+    TOOL_MAX_RETRIES = 3
+    TOOL_RETRY_DELAYS = [1, 2, 4]  # 指数退避（秒）
+
+    async def _execute_tool(self, tool, func_args: dict) -> str:
+        """执行单个工具，含重试 + 熔断 + 截断 + 守卫
+
+        Args:
+            tool: BaseTool 实例
+            func_args: 工具参数（已注入 db/user_id）
+
+        Returns:
+            工具执行结果 JSON 字符串
+        """
+        # 注入 db 和 user_id
+        func_args["db"] = self.db
+        func_args["user_id"] = self.user_id
+
+        # 进入工具执行状态（防压缩状态污染）
+        self._guard.enter_tool_execution()
+
+        try:
+            last_error = None
+            for attempt in range(self.TOOL_MAX_RETRIES):
+                try:
+                    result = await tool.execute(**func_args)
+
+                    # 成功：重置熔断计数 + 截断
+                    registry.record_success(tool.name, self.scenario)
+
+                    # 强制截断超限输出
+                    max_chars = tool.max_results_chars
+                    if max_chars and len(result) > max_chars:
+                        result = result[:max_chars]
+                        result += json.dumps(
+                            {"_truncated": f"输出超过 {max_chars} 字符，已截断"},
+                            ensure_ascii=False,
+                        )
+
+                    return result
+
+                except Exception as e:
+                    last_error = e
+                    logger.warning(
+                        "工具 %s 执行失败 (第 %d/%d 次): %s",
+                        tool.name, attempt + 1, self.TOOL_MAX_RETRIES, e,
+                    )
+                    if attempt < self.TOOL_MAX_RETRIES - 1:
+                        await asyncio.sleep(self.TOOL_RETRY_DELAYS[attempt])
+
+            # 重试耗尽：记录失败
+            registry.record_failure(tool.name, self.scenario)
+            return json.dumps(
+                {"error": f"工具 {tool.name} 执行失败（已重试 {self.TOOL_MAX_RETRIES} 次）: {last_error}"},
+                ensure_ascii=False,
+            )
+        finally:
+            # 退出工具执行状态
+            self._guard.exit_tool_execution()
+
     async def _handle_tool_calls(self, tool_calls: list) -> list[dict]:
         """处理工具调用
 
@@ -158,19 +248,10 @@ class BaseAgent:
             if not tool:
                 result_content = json.dumps(
                     {"error": f"未知工具: {func_name}"},
-                    ensure_ascii=False
+                    ensure_ascii=False,
                 )
             else:
-                try:
-                    # 注入 db 和 user_id 到工具执行上下文
-                    func_args["db"] = self.db
-                    func_args["user_id"] = self.user_id
-                    result_content = await tool.execute(**func_args)
-                except Exception as e:
-                    result_content = json.dumps(
-                        {"error": f"工具执行失败: {str(e)}"},
-                        ensure_ascii=False
-                    )
+                result_content = await self._execute_tool(tool, func_args)
 
             results.append({
                 "role": "tool",
@@ -201,6 +282,7 @@ class BaseAgent:
 
         # 循环处理（最多 max_rounds 轮工具调用）
         thinking = ""
+        model = get_model()
         for _ in range(self.max_rounds):
             choice = await self._call_llm(messages)
 
@@ -208,6 +290,12 @@ class BaseAgent:
             assistant_msg = choice.message
             content = assistant_msg.content or ""
             tool_calls = assistant_msg.tool_calls
+
+            # 累计 token 使用
+            if hasattr(choice, "usage") and choice.usage:
+                self.state.usage["total_tokens"] = (
+                    self.state.usage.get("total_tokens", 0) + choice.usage.total_tokens
+                )
 
             # 保存 assistant 消息到状态
             msg_data = {"role": "assistant", "content": content}
@@ -231,6 +319,7 @@ class BaseAgent:
                     "response": content,
                     "thinking": thinking,
                     "stage": self.state.stage,
+                    "session_id": self.session_id,
                 }
 
             # 处理工具调用
@@ -241,6 +330,10 @@ class BaseAgent:
             # 更新 thinking
             if content:
                 thinking += content + "\n"
+
+            # 检查是否需要更新滚动摘要（token 驱动）
+            if should_update_summary(self.state, model):
+                await update_summary(self.state, model)
 
             # 重新构建消息（包含工具结果）
             messages = self._build_messages(user_message)
@@ -269,37 +362,45 @@ class BaseAgent:
         messages = self._build_messages(user_message)
 
         # 循环处理（最多 max_rounds 轮工具调用）
+        model = get_model()
         for _ in range(self.max_rounds):
             full_content = ""
             tool_calls_data = []
             current_tool_calls = []
 
-            async for chunk in self._call_llm_stream(messages):
-                delta = chunk.choices[0].delta if chunk.choices else None
-                if not delta:
-                    continue
+            # 进入流式响应状态
+            self._guard.enter_streaming()
 
-                # 处理内容
-                if delta.content:
-                    full_content += delta.content
-                    yield {"type": "content", "data": delta.content}
+            try:
+                async for chunk in self._call_llm_stream(messages):
+                    delta = chunk.choices[0].delta if chunk.choices else None
+                    if not delta:
+                        continue
 
-                # 处理工具调用
-                if delta.tool_calls:
-                    for tc in delta.tool_calls:
-                        # 累积工具调用数据
-                        while len(current_tool_calls) <= tc.index:
-                            current_tool_calls.append({
-                                "id": "",
-                                "function": {"name": "", "arguments": ""}
-                            })
-                        if tc.id:
-                            current_tool_calls[tc.index]["id"] = tc.id
-                        if tc.function:
-                            if tc.function.name:
-                                current_tool_calls[tc.index]["function"]["name"] = tc.function.name
-                            if tc.function.arguments:
-                                current_tool_calls[tc.index]["function"]["arguments"] += tc.function.arguments
+                    # 处理内容
+                    if delta.content:
+                        full_content += delta.content
+                        yield {"type": "content", "data": delta.content}
+
+                    # 处理工具调用
+                    if delta.tool_calls:
+                        for tc in delta.tool_calls:
+                            # 累积工具调用数据
+                            while len(current_tool_calls) <= tc.index:
+                                current_tool_calls.append({
+                                    "id": "",
+                                    "function": {"name": "", "arguments": ""}
+                                })
+                            if tc.id:
+                                current_tool_calls[tc.index]["id"] = tc.id
+                            if tc.function:
+                                if tc.function.name:
+                                    current_tool_calls[tc.index]["function"]["name"] = tc.function.name
+                                if tc.function.arguments:
+                                    current_tool_calls[tc.index]["function"]["arguments"] += tc.function.arguments
+            finally:
+                # 退出流式响应状态
+                self._guard.exit_streaming()
 
             # 处理完成的工具调用
             if current_tool_calls:
@@ -318,29 +419,25 @@ class BaseAgent:
                 # 执行工具
                 yield {"type": "tool_call", "data": current_tool_calls}
 
-                # 转换为 tool_calls 对象格式
-                tool_calls_objs = []
-                for tc in current_tool_calls:
-                    # 创建一个简单的对象来模拟 tool_calls 结构
-                    class ToolCall:
-                        def __init__(self, id, function):
-                            self.id = id
-                            self.function = function
-                    class Function:
-                        def __init__(self, name, arguments):
-                            self.name = name
-                            self.arguments = arguments
-                    tool_calls_objs.append(ToolCall(
+                # 转换为 tool_calls 对象格式（与 _handle_tool_calls 接口兼容）
+                tool_calls_objs = [
+                    _Ns(
                         id=tc["id"],
-                        function=Function(
+                        function=_Ns(
                             name=tc["function"]["name"],
                             arguments=tc["function"]["arguments"],
-                        )
-                    ))
+                        ),
+                    )
+                    for tc in current_tool_calls
+                ]
 
                 tool_results = await self._handle_tool_calls(tool_calls_objs)
                 for result in tool_results:
                     self.state.messages.append(result)
+
+                # 检查是否需要更新滚动摘要（token 驱动）
+                if should_update_summary(self.state, model):
+                    await update_summary(self.state, model)
 
                 # 重新构建消息
                 messages = self._build_messages(user_message)
@@ -348,8 +445,8 @@ class BaseAgent:
 
             # 没有工具调用，保存并返回
             self.state.add_message("assistant", full_content)
-            yield {"type": "done", "data": {"response": full_content}}
+            yield {"type": "done", "data": {"response": full_content, "session_id": self.session_id}}
             return
 
         # 超过最大轮次
-        yield {"type": "done", "data": {"response": "处理超时，请重试"}}
+        yield {"type": "done", "data": {"response": "处理超时，请重试", "session_id": self.session_id}}
