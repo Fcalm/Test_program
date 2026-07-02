@@ -24,7 +24,7 @@ import styles from './Resume.module.css'
 
 export default function Resume() {
   const navigate = useNavigate()
-  const { send, streaming } = useSSE()
+  const { send, abort, streaming } = useSSE()
   const messagesEnd = useRef(null)
   const splitterRef = useRef(null)
 
