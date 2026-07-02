@@ -123,22 +123,14 @@ async def get_history_list(
 
 
 async def restore_history(db: AsyncSession, resume: Resume, history: ResumeHistory) -> Resume:
-    """恢复历史版本：将历史快照中的字段合并回简历"""
+    """恢复历史版本：将历史快照中的字段合并回简历
+
+    注意：恢复操作不会创建新的历史记录，避免历史记录无限增长。
+    """
     for field in history.changed_fields:
         if field in history.snapshot:
             setattr(resume, field, history.snapshot[field])
 
-    # 记录这次恢复操作为一条新历史
-    restore_record = ResumeHistory(
-        resume_id=resume.id,
-        snapshot=history.snapshot,
-        changed_fields=history.changed_fields,
-    )
-    db.add(restore_record)
     await db.flush()
-
-    # 清理旧历史
-    await _cleanup_old_history(db, resume.id)
-
     await db.refresh(resume)
     return resume
