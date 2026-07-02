@@ -27,6 +27,7 @@ class ResumeHistory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     resume_id: Mapped[int] = mapped_column(Integer, ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True)
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 历史版本标题
     snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
     changed_fields: Mapped[list] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

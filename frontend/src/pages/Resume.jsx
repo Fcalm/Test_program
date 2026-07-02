@@ -47,6 +47,15 @@ export default function Resume() {
   const [editingSessionId, setEditingSessionId] = useState(null)
   const [editingTitle, setEditingTitle] = useState('')
 
+  // 保存弹窗状态
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saveHistoryName, setSaveHistoryName] = useState('')
+  const [pendingSaveData, setPendingSaveData] = useState(null)
+
+  // 历史标题编辑状态
+  const [editingHistoryId, setEditingHistoryId] = useState(null)
+  const [editingHistoryName, setEditingHistoryName] = useState('')
+
   // 拖拽状态
   const [isDragging, setIsDragging] = useState(false)
 
@@ -295,6 +304,58 @@ export default function Resume() {
     }
   }
 
+  // 开始编辑历史版本名称
+  const startEditHistoryName = (item) => {
+    setEditingHistoryId(item.id)
+    setEditingHistoryName(item.name || formatHistoryTime(item.created_at))
+  }
+
+  // 保存历史版本名称
+  const saveHistoryName = async (historyId) => {
+    try {
+      await apiFetch(`/resume/history/${historyId}/name`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: editingHistoryName }),
+      })
+      setHistory((prev) =>
+        prev.map((h) =>
+          h.id === historyId ? { ...h, name: editingHistoryName } : h
+        )
+      )
+      setEditingHistoryId(null)
+      setEditingHistoryName('')
+      showToast('标题已更新')
+    } catch {
+      showToast('更新失败', 'error')
+    }
+  }
+
+  // 取消编辑历史版本名称
+  const cancelEditHistoryName = () => {
+    setEditingHistoryId(null)
+    setEditingHistoryName('')
+  }
+
+  // 格式化历史时间
+  const formatHistoryTime = (dateStr) => {
+    if (!dateStr) return '未知时间'
+    const date = new Date(dateStr)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    if (isToday) {
+      return `今天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
+
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `昨天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
+
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  }
+
   // 导出简历
   const handleExport = async (format) => {
     try {
@@ -316,22 +377,56 @@ export default function Resume() {
     }
   }
 
-  // 保存简历
-  const handleSave = async () => {
+  // 打开保存弹窗
+  const openSaveModal = () => {
     if (!resumeData) {
       showToast('暂无简历数据', 'error')
       return
     }
 
+    // 生成默认名称：YYYY年MM月DD日 HH:MM
+    const now = new Date()
+    const defaultName = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    setSaveHistoryName(defaultName)
+    setPendingSaveData(resumeData)
+    setShowSaveModal(true)
+  }
+
+  // 确认保存简历
+  const confirmSave = async () => {
+    if (!pendingSaveData) return
+
     try {
       await apiFetch('/resume', {
         method: 'PUT',
-        body: JSON.stringify(resumeData),
+        body: JSON.stringify({
+          ...pendingSaveData,
+          history_name: saveHistoryName,
+        }),
       })
       showToast('保存成功')
+      setShowSaveModal(false)
+      setPendingSaveData(null)
+
+      // 刷新历史列表
+      if (activeTab === 'history') {
+        loadHistory()
+      }
     } catch (err) {
       showToast(err.message, 'error')
     }
+  }
+
+  // 编辑模式：保存编辑数据
+  const handleEditSave = async () => {
+    if (!editData) return
+
+    // 生成默认名称
+    const now = new Date()
+    const defaultName = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    setSaveHistoryName(defaultName)
+    setPendingSaveData(editData)
+    setShowSaveModal(true)
   }
 
   // 编辑模式：保存编辑数据
@@ -653,10 +748,43 @@ export default function Resume() {
                   history.map((h) => (
                     <div key={h.id} className={styles.historyItem}>
                       <div className={styles.historyInfo}>
-                        <div className={styles.historyName}>{h.name || '未命名版本'}</div>
-                        <div className={styles.historyDate}>{h.created_at}</div>
+                        {editingHistoryId === h.id ? (
+                          <input
+                            className={styles.historyNameInput}
+                            value={editingHistoryName}
+                            onChange={(e) => setEditingHistoryName(e.target.value)}
+                            onBlur={() => saveHistoryName(h.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveHistoryName(h.id)
+                              if (e.key === 'Escape') cancelEditHistoryName()
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                        ) : (
+                          <div
+                            className={styles.historyName}
+                            onDoubleClick={() => startEditHistoryName(h)}
+                            title="双击编辑标题"
+                          >
+                            {h.name || formatHistoryTime(h.created_at)}
+                          </div>
+                        )}
+                        <div className={styles.historyDate}>
+                          {new Date(h.created_at).toLocaleString('zh-CN')}
+                        </div>
                       </div>
                       <div className={styles.historyActions}>
+                        <button
+                          className={styles.iconBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            startEditHistoryName(h)
+                          }}
+                          title="编辑标题"
+                        >
+                          <Edit3 size={14} />
+                        </button>
                         <button className={styles.iconBtn} onClick={() => restoreHistory(h.id)} title="恢复">
                           <RotateCcw size={14} />
                         </button>
@@ -763,6 +891,39 @@ export default function Resume() {
           )}
         </div>
       </div>
+
+      {/* 保存弹窗 */}
+      {showSaveModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowSaveModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>保存简历</h3>
+              <button className={styles.modalClose} onClick={() => setShowSaveModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <label className={styles.modalLabel}>版本名称</label>
+              <input
+                className={styles.modalInput}
+                value={saveHistoryName}
+                onChange={(e) => setSaveHistoryName(e.target.value)}
+                placeholder="输入版本名称"
+                autoFocus
+              />
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setShowSaveModal(false)}>
+                取消
+              </button>
+              <button className={styles.confirmBtn} onClick={confirmSave}>
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Toast />
     </Layout>
   )
