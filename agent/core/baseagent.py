@@ -333,14 +333,20 @@ class BaseAgent:
             content = assistant_msg.content or ""
             tool_calls = assistant_msg.tool_calls
 
+            # 提取 thinking（DeepSeek reasoning_content）
+            if hasattr(assistant_msg, "reasoning_content") and assistant_msg.reasoning_content:
+                thinking = assistant_msg.reasoning_content
+
             # 累计 token 使用
             if hasattr(choice, "usage") and choice.usage:
                 self.state.usage["total_tokens"] = (
                     self.state.usage.get("total_tokens", 0) + choice.usage.total_tokens
                 )
 
-            # 保存 assistant 消息到状态
+            # 保存 assistant 消息到状态（包含 thinking）
             msg_data = {"role": "assistant", "content": content}
+            if thinking:
+                msg_data["thinking"] = thinking
             if tool_calls:
                 msg_data["tool_calls"] = [
                     {
@@ -407,6 +413,7 @@ class BaseAgent:
         model = get_model()
         for _ in range(self.max_rounds):
             full_content = ""
+            full_thinking = ""
             tool_calls_data = []
             current_tool_calls = []
 
@@ -427,6 +434,7 @@ class BaseAgent:
 
                     # 处理思考过程（DeepSeek reasoning_content）
                     if hasattr(delta, "reasoning_content") and delta.reasoning_content:
+                        full_thinking += delta.reasoning_content
                         yield {"type": "thinking", "data": delta.reasoning_content}
 
                     # 处理内容
@@ -456,8 +464,10 @@ class BaseAgent:
 
             # 处理完成的工具调用
             if current_tool_calls:
-                # 保存 assistant 消息
+                # 保存 assistant 消息（包含 thinking）
                 msg_data = {"role": "assistant", "content": full_content or None}
+                if full_thinking:
+                    msg_data["thinking"] = full_thinking
                 msg_data["tool_calls"] = [
                     {
                         "id": tc["id"],
@@ -496,7 +506,10 @@ class BaseAgent:
                 continue
 
             # 没有工具调用，保存并返回
-            self.state.add_message("assistant", full_content)
+            msg_data = {"role": "assistant", "content": full_content}
+            if full_thinking:
+                msg_data["thinking"] = full_thinking
+            self.state.add_message(**msg_data)
             yield {"type": "done", "data": {"response": full_content, "session_id": self.session_id}}
             return
 

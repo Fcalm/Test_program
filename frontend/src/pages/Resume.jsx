@@ -159,7 +159,18 @@ export default function Resume() {
   const loadSession = async (id) => {
     try {
       const data = await apiJson(`/agent/sessions/${id}/load`)
-      setMessages(data.messages || [])
+      const rawMessages = data.messages || []
+
+      // 过滤并转换消息格式
+      const formattedMessages = rawMessages
+        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content || '',
+          thinking: msg.thinking || '',
+        }))
+
+      setMessages(formattedMessages)
       setSessionId(id)
       setShowSessions(false)
     } catch {
