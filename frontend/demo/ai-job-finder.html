@@ -740,7 +740,8 @@
 
         /* 滚动条样式 */
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 0;
+            height: 0;
         }
 
         ::-webkit-scrollbar-track {
@@ -748,12 +749,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--gray-300);
-            border-radius: 2px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-400);
+            background: transparent;
         }
     </style>
 </head>

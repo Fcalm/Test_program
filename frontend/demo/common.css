@@ -328,9 +328,10 @@ body {
     background: var(--success);
 }
 
-/* ===== 滚动条 ===== */
+/* ===== 隐藏滚动条但仍可滚动 ===== */
 ::-webkit-scrollbar {
-    width: 4px;
+    width: 0;
+    height: 0;
 }
 
 ::-webkit-scrollbar-track {
@@ -338,12 +339,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--gray-300);
-    border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-400);
+    background: transparent;
 }
 
 /* ===== 响应式 ===== */

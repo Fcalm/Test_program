@@ -777,9 +777,10 @@
             }
         }
 
-        /* 滚动条样式 */
+        /* 隐藏滚动条但仍可滚动 */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 0;
+            height: 0;
         }
 
         ::-webkit-scrollbar-track {
@@ -787,12 +788,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--gray-300);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-400);
+            background: transparent;
         }
     </style>
 </head>
@@ -1007,117 +1003,137 @@
             const historyList = document.getElementById('historyList');
             const historyCount = document.getElementById('historyCount');
 
-            // 模拟数据（实际应从API获取）
-            const mockHistory = [
-                {
-                    id: 1,
-                    title: '字节跳动 - 前端实习面试',
-                    date: '2026-06-10 14:30',
-                    score: 82,
-                    status: 'completed'
-                },
-                {
-                    id: 2,
-                    title: '腾讯 - 后端开发模拟面试',
-                    date: '2026-06-09 10:00',
-                    score: 75,
-                    status: 'completed'
-                },
-                {
-                    id: 3,
-                    title: '阿里巴巴 - Java后端面试',
-                    date: '2026-06-08 16:45',
-                    score: 68,
-                    status: 'in_progress'
-                },
-                {
-                    id: 4,
-                    title: '美团 - 产品经理模拟面试',
-                    date: '2026-06-07 09:15',
-                    score: 88,
-                    status: 'completed'
-                }
-            ];
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/agent/sessions?scenario=interview`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-            historyCount.textContent = `共 ${mockHistory.length} 条记录`;
+                if (!response.ok) throw new Error('加载失败');
 
-            if (mockHistory.length === 0) {
-                historyList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-                            </svg>
-                        </div>
-                        <div class="empty-title">暂无面试记录</div>
-                        <div class="empty-desc">点击"新的面试"开始你的第一次模拟面试</div>
-                        <button class="btn btn-primary" onclick="startNewInterview()">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                            </svg>
-                            开始面试
-                        </button>
-                    </div>
-                `;
-                return;
-            }
+                const data = await response.json();
+                const sessions = data.sessions || [];
 
-            historyList.innerHTML = mockHistory.map(item => {
-                const scoreClass = item.score >= 80 ? 'high' : item.score >= 60 ? 'medium' : 'low';
-                const statusText = item.status === 'completed' ? '已完成' : '进行中';
-                const statusDotClass = item.status === 'completed' ? 'completed' : 'in-progress';
+                historyCount.textContent = `共 ${sessions.length} 条记录`;
 
-                return `
-                    <div class="history-card">
-                        <div class="card-left">
-                            <div class="card-icon">
+                if (sessions.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+                                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
                                 </svg>
                             </div>
-                            <div class="card-info">
-                                <div class="card-title">${escapeHtml(item.title)}</div>
-                                <div class="card-meta">
-                                    <span class="card-date">
-                                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                                        </svg>
-                                        ${escapeHtml(item.date)}
-                                    </span>
-                                    <span class="card-status">
-                                        <span class="status-dot ${statusDotClass}"></span>
-                                        ${statusText}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-center">
-                            <div class="score-badge">
-                                <span class="score-value ${scoreClass}">${item.score}</span>
-                                <span class="score-label">综合分数</span>
-                            </div>
-                        </div>
-
-                        <div class="card-actions">
-                            ${item.status === 'in_progress' ? `
-                                <button class="btn btn-sm btn-success" onclick="continueInterview(${item.id})">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                    继续
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-sm btn-outline" onclick="viewReport(${item.id})">
+                            <div class="empty-title">暂无面试记录</div>
+                            <div class="empty-desc">点击"新的面试"开始你的第一次模拟面试</div>
+                            <button class="btn btn-primary" onclick="startNewInterview()">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                                 </svg>
-                                分析报告
+                                开始面试
                             </button>
                         </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = sessions.map(item => {
+                    // 解析 stage 获取分数和状态
+                    const stage = item.stage || '';
+                    const isInProgress = !stage.includes('完成') && !stage.includes('报告');
+                    const statusText = isInProgress ? '进行中' : '已完成';
+                    const statusDotClass = isInProgress ? 'in-progress' : 'completed';
+
+                    // 从 stage 提取分数（如果有）
+                    const scoreMatch = stage.match(/(\d+)分/);
+                    const score = scoreMatch ? parseInt(scoreMatch[1]) : (isInProgress ? '--' : '—');
+                    const scoreClass = typeof score === 'number' ? (score >= 80 ? 'high' : score >= 60 ? 'medium' : 'low') : '';
+
+                    // 格式化时间
+                    const date = item.updated_at ? new Date(item.updated_at) : new Date();
+                    const dateStr = date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+                    // 标题：使用 stage 或默认
+                    const title = stage || `面试会话 #${item.session_id.slice(0, 8)}`;
+
+                    return `
+                        <div class="history-card">
+                            <div class="card-left">
+                                <div class="card-icon">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+                                    </svg>
+                                </div>
+                                <div class="card-info">
+                                    <div class="card-title">${escapeHtml(title)}</div>
+                                    <div class="card-meta">
+                                        <span class="card-date">
+                                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                                            </svg>
+                                            ${dateStr}
+                                        </span>
+                                        <span class="card-status">
+                                            <span class="status-dot ${statusDotClass}"></span>
+                                            ${statusText}
+                                        </span>
+                                        <span>${item.turn_count} 轮</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-center">
+                                <div class="score-badge">
+                                    <span class="score-value ${scoreClass}">${score}</span>
+                                    <span class="score-label">综合分数</span>
+                                </div>
+                            </div>
+
+                            <div class="card-actions">
+                                ${isInProgress ? `
+                                    <button class="btn btn-sm btn-success" onclick="continueInterview('${escapeHtml(item.session_id)}')">
+                                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                        继续
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-outline" onclick="deleteInterviewSession('${escapeHtml(item.session_id)}')">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                    删除
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                historyCount.textContent = '加载失败';
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-title">加载失败</div>
+                        <div class="empty-desc">${escapeHtml(err.message)}</div>
                     </div>
                 `;
-            }).join('');
+            }
+        }
+
+        // 删除面试会话
+        async function deleteInterviewSession(sessionId) {
+            if (!confirm('确定要删除这个面试会话吗？')) return;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/agent/sessions/${sessionId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('删除失败');
+                showToast('已删除');
+                loadInterviewHistory();
+            } catch (err) {
+                showToast(err.message, true);
+            }
         }
 
         // ===== Toast 提示 =====
@@ -1159,16 +1175,22 @@
             btn.innerHTML = '创建中...';
 
             try {
+                // 构建初始消息
+                let initMessage = `请根据以下 JD 开始模拟面试：\n\n${jdText}`;
+                if (titleInput) {
+                    initMessage = `面试标题：${titleInput}\n\n${initMessage}`;
+                }
+
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/interview/start`, {
+                const response = await fetch(`${API_BASE}/agent/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        jd_text: jdText,
-                        title: titleInput || undefined
+                        message: initMessage,
+                        scenario: 'interview',
                     })
                 });
 
@@ -1180,12 +1202,8 @@
                 const data = await response.json();
                 closeJDModal();
 
-                // 跳转到面试对话页
-                const params = new URLSearchParams({ session_id: data.session_id });
-                if (data.title) params.set('title', data.title);
-                if (data.company) params.set('company', data.company);
-                if (data.position) params.set('position', data.position);
-                window.location.href = `ai-interview-chat.html?${params.toString()}`;
+                // 跳转到面试对话页，携带 session_id
+                window.location.href = `ai-interview-chat.html?session_id=${data.session_id}`;
 
             } catch (err) {
                 showToast(err.message, true);
@@ -1198,14 +1216,14 @@
             }
         }
 
-        // 继续面试（跳转到对话页）
-        function continueInterview(id) {
-            window.location.href = `ai-interview-chat.html?session_id=${id}`;
+        // 继续面试（跳转到对话页，携带 session_id）
+        function continueInterview(sessionId) {
+            window.location.href = `ai-interview-chat.html?session_id=${sessionId}`;
         }
 
         // 查看分析报告（跳转到报告页）
-        function viewReport(id) {
-            window.location.href = `ai-interview-report.html?session_id=${id}`;
+        function viewReport(sessionId) {
+            window.location.href = `ai-interview-report.html?session_id=${sessionId}`;
         }
 
         // 显示帮助弹窗
