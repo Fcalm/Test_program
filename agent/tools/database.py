@@ -1,8 +1,12 @@
 """数据库工具 - 通用读写"""
 
 import json
+import logging
+
 from agent.tools.basetool import BaseTool
 from agent.tools.registry import registry
+
+logger = logging.getLogger(__name__)
 
 
 class ReadDBTool(BaseTool):
@@ -48,6 +52,7 @@ class ReadDBTool(BaseTool):
 
     async def execute(self, **kwargs) -> str:
         """读取指定表的数据"""
+        logger.debug("调用工具: %s", self.name)
         from backend.services.db_service import read_table
 
         db = kwargs.get("db")
@@ -72,7 +77,10 @@ class EditDBTool(BaseTool):
     def description(self) -> str:
         from backend.services.db_service import TABLE_SCHEMAS
         tables = ", ".join(TABLE_SCHEMAS.keys())
-        return f"创建或更新指定表的数据。支持的表：{tables}。"
+        return (
+            f"创建或更新指定表的数据。支持的表：{tables}。"
+            "注意：JSON 字段（如 basic_info, education 等）必须是 JSON 字符串格式。"
+        )
 
     @property
     def parameters(self) -> dict:
@@ -87,12 +95,12 @@ class EditDBTool(BaseTool):
                 },
                 "query": {
                     "type": "object",
-                    "description": "查询条件（用于定位记录）",
+                    "description": "查询条件，用于定位记录。例如：{\"user_id\": 123}",
                     "additionalProperties": True
                 },
                 "data": {
                     "type": "object",
-                    "description": "要更新的数据（键值对）",
+                    "description": "要更新的数据。JSON 字段需要序列化为字符串。例如：{\"basic_info\": \"{\\\"name\\\": \\\"张三\\\"}\"}",
                     "additionalProperties": True
                 }
             },
@@ -109,6 +117,7 @@ class EditDBTool(BaseTool):
 
     async def execute(self, **kwargs) -> str:
         """创建或更新指定表的数据"""
+        logger.debug("调用工具: %s", self.name)
         from backend.services.db_service import edit_table
 
         db = kwargs.get("db")

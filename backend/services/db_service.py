@@ -1,26 +1,39 @@
 """通用数据库操作服务"""
 
+import json
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-# 支持的表及其字段定义
+# 支持的表及其字段定义（移除 agent_sessions 写入权限，移除已合并的 file_texts）
 TABLE_SCHEMAS = {
     "resumes": {
         "key_field": "user_id",
         "fields": ["basic_info", "education", "internship_exp", "project_exp", "personal_strengths"],
     },
-    "agent_sessions": {
-        "key_field": "id",
-        "fields": ["scenario", "stage", "messages", "tool_results", "usage", "turn_count", "error"],
-    },
     "uploaded_files": {
         "key_field": "user_id",
-        "fields": ["original_name", "storage_path", "file_type", "file_size"],
+        "fields": ["original_name", "storage_path", "file_type", "file_size", "raw_text", "char_count"],
     },
-    "file_texts": {
-        "key_field": "file_id",
-        "fields": ["raw_text", "char_count"],
+}
+
+# 只读表（LLM 可读不可写）
+READONLY_TABLES = {"agent_sessions", "users", "resume_history"}
+
+# 完整表 schema（包含只读表，用于读取）
+ALL_TABLE_SCHEMAS = {
+    **TABLE_SCHEMAS,
+    "agent_sessions": {
+        "key_field": "user_id",
+        "fields": ["scenario", "stage", "messages", "tool_results", "usage", "turn_count", "error"],
+    },
+    "users": {
+        "key_field": "id",
+        "fields": ["username", "email", "is_active"],
+    },
+    "resume_history": {
+        "key_field": "resume_id",
+        "fields": ["snapshot", "changed_fields"],
     },
 }
 
@@ -36,7 +49,7 @@ async def read_table(
     Returns:
         {"success": True, "data": [...]} 或 {"success": False, "error": "..."}
     """
-    if table_name not in TABLE_SCHEMAS:
+    if table_name not in ALL_TABLE_SCHEMAS:
         return {"success": False, "error": f"不支持的表：{table_name}"}
 
     # 构建查询
@@ -72,6 +85,8 @@ async def edit_table(
         {"success": True, "message": "..."} 或 {"success": False, "error": "..."}
     """
     if table_name not in TABLE_SCHEMAS:
+        if table_name in READONLY_TABLES:
+            return {"success": False, "error": f"表 {table_name} 为只读，不可修改"}
         return {"success": False, "error": f"不支持的表：{table_name}"}
 
     if not data:
@@ -89,11 +104,23 @@ async def edit_table(
     result = await db.execute(text(check_sql), params)
     exists = result.scalar() > 0
 
+    # 自动序列化 JSON 字段
+    def _serialize_json_fields(d: dict) -> dict:
+        """将 dict/list 类型的值序列化为 JSON 字符串"""
+        result = {}
+        for key, value in d.items():
+            if isinstance(value, (dict, list)):
+                result[key] = json.dumps(value, ensure_ascii=False)
+            else:
+                result[key] = value
+        return result
+
     if exists:
         # 更新
         set_clauses = []
         update_params = dict(params)
-        for key, value in data.items():
+        serialized_data = _serialize_json_fields(data)
+        for key, value in serialized_data.items():
             set_clauses.append(f"{key} = :set_{key}")
             update_params[f"set_{key}"] = value
 
@@ -110,10 +137,11 @@ async def edit_table(
     else:
         # 插入
         all_data = {**query, **data}
-        columns = ", ".join(all_data.keys())
-        placeholders = ", ".join(f":{k}" for k in all_data.keys())
+        serialized_data = _serialize_json_fields(all_data)
+        columns = ", ".join(serialized_data.keys())
+        placeholders = ", ".join(f":{k}" for k in serialized_data.keys())
         insert_sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-        await db.execute(text(insert_sql), all_data)
+        await db.execute(text(insert_sql), serialized_data)
         await db.flush()
 
         return {
