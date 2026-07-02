@@ -149,7 +149,17 @@ export default function Resume() {
       const rawMessages = data.messages || []
 
       const formattedMessages = rawMessages
-        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+        .filter((msg) => {
+          if (msg.role === 'user') return true
+          if (msg.role === 'assistant') {
+            // 过滤掉有 tool_calls 的中间消息
+            if (msg.tool_calls && msg.tool_calls.length > 0) return false
+            // 过滤掉没有内容的消息
+            if (!msg.content && !msg.thinking) return false
+            return true
+          }
+          return false
+        })
         .map((msg) => ({
           role: msg.role,
           content: msg.content || '',
