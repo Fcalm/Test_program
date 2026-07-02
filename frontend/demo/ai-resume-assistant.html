@@ -137,52 +137,69 @@
         .book-loading {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 8px 0;
+            gap: 10px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
         .book-loading .book {
-            width: 24px;
-            height: 18px;
+            width: 28px;
+            height: 22px;
             position: relative;
-            perspective: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .book-loading .book-page {
             position: absolute;
-            width: 12px;
-            height: 18px;
-            background: var(--gray-400);
+            width: 14px;
+            height: 20px;
             border-radius: 0 2px 2px 0;
             transform-origin: left center;
-            animation: flipPage 1.4s ease-in-out infinite;
+            animation: flipPage 1.2s ease-in-out infinite;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .book-loading .book-page:nth-child(1) { animation-delay: 0s; background: var(--gray-300); }
-        .book-loading .book-page:nth-child(2) { animation-delay: 0.2s; background: var(--gray-400); }
-        .book-loading .book-page:nth-child(3) { animation-delay: 0.4s; background: var(--gray-500); }
+        .book-loading .book-page:nth-child(1) {
+            animation-delay: 0s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 3;
+        }
+        .book-loading .book-page:nth-child(2) {
+            animation-delay: 0.2s;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            z-index: 2;
+        }
+        .book-loading .book-page:nth-child(3) {
+            animation-delay: 0.4s;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            z-index: 1;
+        }
         @keyframes flipPage {
-            0%, 100% { transform: rotateY(0deg); }
-            50% { transform: rotateY(-180deg); }
+            0%, 100% { transform: perspective(200px) rotateY(0deg); opacity: 1; }
+            50% { transform: perspective(200px) rotateY(-180deg); opacity: 0.6; }
         }
         .book-loading .loading-text {
-            font-size: 13px;
-            color: var(--gray-500);
-            margin-left: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
         }
         .book-loading .loading-dots {
             display: inline-flex;
-            gap: 2px;
+            gap: 3px;
         }
         .book-loading .loading-dots span {
-            width: 4px;
-            height: 4px;
-            background: var(--gray-400);
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
-            animation: dotPulse 1.4s ease-in-out infinite;
+            animation: dotPulse 1.2s ease-in-out infinite;
         }
-        .book-loading .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .book-loading .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        .book-loading .loading-dots span:nth-child(1) { background: #667eea; }
+        .book-loading .loading-dots span:nth-child(2) { animation-delay: 0.2s; background: #f093fb; }
+        .book-loading .loading-dots span:nth-child(3) { animation-delay: 0.4s; background: #4facfe; }
         @keyframes dotPulse {
             0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-            40% { opacity: 1; transform: scale(1); }
+            40% { opacity: 1; transform: scale(1.2); }
         }
         .message-content p { margin-bottom: 8px; }
         .message-content p:last-child { margin-bottom: 0; }
