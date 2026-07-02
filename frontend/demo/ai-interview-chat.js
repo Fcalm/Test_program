@@ -333,25 +333,25 @@ function createStreamMessage() {
             ${AI_AVATAR_SVG}
         </div>
         <div class="message-body">
-            <div class="message-thinking" id="${id}-thinking" style="display: none;">
+            <div class="message-thinking" id="${id}-thinking">
                 <div class="thinking-header">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
                     <span>思考过程</span>
                     <span class="thinking-toggle">点击展开/折叠</span>
                 </div>
-                <div class="thinking-content" id="${id}-thinking-content"></div>
-            </div>
-            <div class="message-content" id="${id}-content">
-                <div class="book-loading">
-                    <div class="book">
-                        <div class="book-page"></div>
-                        <div class="book-page"></div>
-                        <div class="book-page"></div>
+                <div class="thinking-content" id="${id}-thinking-content">
+                    <div class="book-loading">
+                        <div class="book">
+                            <div class="book-page"></div>
+                            <div class="book-page"></div>
+                            <div class="book-page"></div>
+                        </div>
+                        <span class="loading-text">思考中</span>
+                        <span class="loading-dots"><span></span><span></span><span></span></span>
                     </div>
-                    <span class="loading-text">思考中</span>
-                    <span class="loading-dots"><span></span><span></span><span></span></span>
                 </div>
             </div>
+            <div class="message-content" id="${id}-content" style="display: none;"></div>
         </div>
     `;
     container.appendChild(div);
@@ -367,10 +367,11 @@ function updateStreamMessage(id, thinking, content, isThinking) {
 
     if (thinking && thinkingDiv) {
         thinkingDiv.style.display = 'block';
-        thinkingContent.textContent = thinking;
+        thinkingContent.innerHTML = formatContent(thinking) + '<span class="typing-cursor">▊</span>';
     }
 
     if (content && contentDiv) {
+        contentDiv.style.display = 'block';
         contentDiv.innerHTML = formatContent(content) + '<span class="typing-cursor">▊</span>';
     }
 
@@ -383,20 +384,30 @@ function finalizeStreamMessage(id, thinking, content, tips) {
     if (!el) return;
 
     const thinkingDiv = document.getElementById(id + '-thinking');
+    const thinkingContent = document.getElementById(id + '-thinking-content');
     const contentEl = document.getElementById(id + '-content');
 
-    if (!thinking && thinkingDiv) {
-        thinkingDiv.remove();
+    // 清理 thinking 区域
+    if (thinkingDiv) {
+        if (thinking) {
+            thinkingContent.innerHTML = formatContent(thinking);
+            thinkingDiv.classList.add('collapsed');
+            thinkingDiv.onclick = function() {
+                this.classList.toggle('collapsed');
+            };
+        } else {
+            thinkingDiv.remove();
+        }
     }
 
+    // 清理 content 区域
     if (contentEl) {
-        contentEl.innerHTML = formatContent(content);
-    }
-
-    if (thinking && thinkingDiv) {
-        thinkingDiv.onclick = function() {
-            this.classList.toggle('collapsed');
-        };
+        if (content) {
+            contentEl.style.display = 'block';
+            contentEl.innerHTML = formatContent(content);
+        } else {
+            contentEl.remove();
+        }
     }
 
     // 添加 Tips
