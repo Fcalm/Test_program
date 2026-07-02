@@ -12,6 +12,7 @@ import {
   Search,
   PanelRightOpen,
   X,
+  Edit3,
 } from 'lucide-react'
 import { apiJson, apiFetch, apiDelete } from '../lib/api'
 import useSSE from '../hooks/useSSE'
@@ -26,7 +27,6 @@ export default function Resume() {
   const { send, streaming } = useSSE()
   const messagesEnd = useRef(null)
   const splitterRef = useRef(null)
-  const editAreaRef = useRef(null)
 
   const [messages, setMessages] = useState([])
   const [sessionId, setSessionId] = useState(null)
@@ -40,10 +40,17 @@ export default function Resume() {
   const [previewOpen, setPreviewOpen] = useState(true)
   const [chatWidth, setChatWidth] = useState(60) // 百分比
 
+  // 编辑状态
+  const [editData, setEditData] = useState(null)
+
+  // 会话标题编辑状态
+  const [editingSessionId, setEditingSessionId] = useState(null)
+  const [editingTitle, setEditingTitle] = useState('')
+
   // 拖拽状态
   const [isDragging, setIsDragging] = useState(false)
 
-  // 加载简历数据和会话列表
+  // 加载简历数据和会话列表，并自动加载最近会话
   useEffect(() => {
     apiJson('/resume')
       .then((data) => {
@@ -55,7 +62,15 @@ export default function Resume() {
       .catch(() => {})
 
     apiJson('/agent/sessions?scenario=resume')
-      .then((data) => setSessions(data.sessions || []))
+      .then((data) => {
+        const sessionsList = data.sessions || []
+        setSessions(sessionsList)
+
+        // 自动加载最近的会话
+        if (sessionsList.length > 0) {
+          loadSession(sessionsList[0].session_id)
+        }
+      })
       .catch(() => {})
   }, [])
 
@@ -196,6 +211,56 @@ export default function Resume() {
     setActiveTab('preview')
   }
 
+  // 开始编辑会话标题
+  const startEditSessionTitle = (session) => {
+    setEditingSessionId(session.session_id)
+    setEditingTitle(session.title || formatSessionTime(session.updated_at))
+  }
+
+  // 保存会话标题
+  const saveSessionTitle = async (sessionId) => {
+    try {
+      // TODO: 后端需要支持更新会话标题的 API
+      // 暂时只更新本地状态
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.session_id === sessionId ? { ...s, title: editingTitle } : s
+        )
+      )
+      setEditingSessionId(null)
+      setEditingTitle('')
+      showToast('标题已更新')
+    } catch {
+      showToast('更新失败', 'error')
+    }
+  }
+
+  // 取消编辑会话标题
+  const cancelEditSessionTitle = () => {
+    setEditingSessionId(null)
+    setEditingTitle('')
+  }
+
+  // 格式化会话时间（精确到分钟）
+  const formatSessionTime = (dateStr) => {
+    if (!dateStr) return '未知时间'
+    const date = new Date(dateStr)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    if (isToday) {
+      return `今天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
+
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `昨天 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    }
+
+    return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  }
+
   // 加载历史版本
   const loadHistory = async () => {
     try {
@@ -258,12 +323,6 @@ export default function Resume() {
       return
     }
 
-    // 如果在编辑模式，提示用户通过对话修改
-    if (activeTab === 'edit') {
-      showToast('请通过左侧对话修改简历内容', 'error')
-      return
-    }
-
     try {
       await apiFetch('/resume', {
         method: 'PUT',
@@ -273,6 +332,84 @@ export default function Resume() {
     } catch (err) {
       showToast(err.message, 'error')
     }
+  }
+
+  // 编辑模式：保存编辑数据
+  const handleEditSave = async () => {
+    if (!editData) return
+
+    try {
+      await apiFetch('/resume', {
+        method: 'PUT',
+        body: JSON.stringify(editData),
+      })
+      setResumeData(editData)
+      showToast('保存成功')
+    } catch (err) {
+      showToast(err.message, 'error')
+    }
+  }
+
+  // 编辑模式：内联编辑 - 同步 contentEditable 的文本回 editData
+  const handleInlineEdit = (path, value) => {
+    setEditData((prev) => {
+      const next = JSON.parse(JSON.stringify(prev))
+      let target = next
+      for (let i = 0; i < path.length - 1; i++) {
+        target = target[path[i]]
+      }
+      target[path[path.length - 1]] = value
+      return next
+    })
+  }
+
+  // 编辑模式：添加条目
+  const handleAddItem = (section) => {
+    const templates = {
+      education: { school: '', degree: '', major: '', time: '', courses: '' },
+      internship_exp: { company: '', role: '', time: '', description: [''] },
+      project_exp: { name: '', role: '', time: '', description: [''] },
+    }
+    setEditData((prev) => {
+      const next = { ...prev }
+      if (section === 'personal_strengths') {
+        next.personal_strengths = [...(next.personal_strengths || []), '']
+      } else {
+        next[section] = [...(next[section] || []), templates[section]]
+      }
+      return next
+    })
+  }
+
+  // 编辑模式：删除条目
+  const handleRemoveItem = (section, index) => {
+    setEditData((prev) => {
+      const next = { ...prev }
+      next[section] = next[section].filter((_, i) => i !== index)
+      return next
+    })
+  }
+
+  // 编辑模式：添加描述条目
+  const handleAddDesc = (section, itemIndex) => {
+    setEditData((prev) => {
+      const next = { ...prev }
+      const arr = [...next[section]]
+      arr[itemIndex] = { ...arr[itemIndex], description: [...(arr[itemIndex].description || []), ''] }
+      next[section] = arr
+      return next
+    })
+  }
+
+  // 编辑模式：删除描述条目
+  const handleRemoveDesc = (section, itemIndex, descIndex) => {
+    setEditData((prev) => {
+      const next = { ...prev }
+      const arr = [...next[section]]
+      arr[itemIndex] = { ...arr[itemIndex], description: arr[itemIndex].description.filter((_, i) => i !== descIndex) }
+      next[section] = arr
+      return next
+    })
   }
 
   // 上传简历
@@ -447,6 +584,9 @@ export default function Resume() {
                       .then((data) => setSessions(data.sessions || []))
                       .catch(() => {})
                   }
+                  if (tab.key === 'edit' && resumeData) {
+                    setEditData(JSON.parse(JSON.stringify(resumeData)))
+                  }
                   setActiveTab(tab.key)
                 }}
               >
@@ -476,24 +616,26 @@ export default function Resume() {
 
             {/* 编辑 Tab */}
             {activeTab === 'edit' && (
-              <div className={styles.editContainer}>
-                <div
-                  ref={editAreaRef}
-                  className={styles.resumePreview}
-                  contentEditable
-                  suppressContentEditableWarning
-                >
-                  {resumeData ? <ResumePreview data={resumeData} /> : (
-                    <div className={styles.emptyState}>
-                      <div className={styles.emptyIcon}>
-                        <FileText size={24} />
-                      </div>
-                      <div className={styles.emptyTitle}>暂无简历数据</div>
-                      <div className={styles.emptyDesc}>请先通过对话生成简历</div>
-                    </div>
-                  )}
+              editData ? (
+                <div className={styles.resumePreview}>
+                  <ResumeEditor
+                    data={editData}
+                    onEdit={handleInlineEdit}
+                    onAddItem={handleAddItem}
+                    onRemoveItem={handleRemoveItem}
+                    onAddDesc={handleAddDesc}
+                    onRemoveDesc={handleRemoveDesc}
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyIcon}>
+                    <FileText size={24} />
+                  </div>
+                  <div className={styles.emptyTitle}>暂无简历数据</div>
+                  <div className={styles.emptyDesc}>请先通过对话生成简历</div>
+                </div>
+              )
             )}
 
             {/* 历史 Tab */}
@@ -546,15 +688,51 @@ export default function Resume() {
                       className={`${styles.sessionItem} ${sessionId === s.session_id ? styles.active : ''}`}
                     >
                       <div className={styles.sessionInfo} onClick={() => loadSession(s.session_id)}>
-                        <div className={styles.sessionTitle}>
-                          {s.stage || `会话 #${s.session_id.slice(0, 8)}`}
-                        </div>
+                        {editingSessionId === s.session_id ? (
+                          <input
+                            className={styles.sessionTitleInput}
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={() => saveSessionTitle(s.session_id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveSessionTitle(s.session_id)
+                              if (e.key === 'Escape') cancelEditSessionTitle()
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                        ) : (
+                          <div
+                            className={styles.sessionTitle}
+                            onDoubleClick={() => startEditSessionTitle(s)}
+                            title="双击编辑标题"
+                          >
+                            {s.title || formatSessionTime(s.updated_at)}
+                          </div>
+                        )}
                         <div className={styles.sessionMeta}>
-                          {s.turn_count} 轮 · {s.updated_at ? new Date(s.updated_at).toLocaleDateString('zh-CN') : ''}
+                          {s.turn_count} 轮
                         </div>
                       </div>
                       <div className={styles.sessionActions}>
-                        <button className={styles.iconBtn} onClick={() => deleteSession(s.session_id)} title="删除">
+                        <button
+                          className={styles.iconBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            startEditSessionTitle(s)
+                          }}
+                          title="编辑标题"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          className={styles.iconBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteSession(s.session_id)
+                          }}
+                          title="删除"
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -577,7 +755,7 @@ export default function Resume() {
                   <Download size={14} />
                   导出
                 </button>
-                <button className={styles.saveBtn} onClick={handleSave}>
+                <button className={styles.saveBtn} onClick={handleEditSave}>
                   保存
                 </button>
               </div>
@@ -689,6 +867,256 @@ function ResumePreview({ data }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// 可编辑文本组件 - contentEditable + onBlur 同步
+function Editable({ text, path, onEdit, className, placeholder, tag: Tag = 'span' }) {
+  const handleBlur = (e) => {
+    const newText = e.currentTarget.textContent || ''
+    if (newText !== (text || '')) {
+      onEdit(path, newText)
+    }
+  }
+
+  return (
+    <Tag
+      className={`${styles.editable} ${className || ''}`}
+      contentEditable
+      suppressContentEditableWarning
+      onBlur={handleBlur}
+      data-placeholder={placeholder || '点击编辑'}
+    >
+      {text || ''}
+    </Tag>
+  )
+}
+
+// 可编辑描述列表（ul > li）
+function EditableDescList({ items, section, itemIndex, onEdit, onAddDesc, onRemoveDesc }) {
+  return (
+    <div className={styles.resumeItemDesc}>
+      <ul>
+        {(items || []).map((d, j) => (
+          <li key={j} className={styles.editableListItem}>
+            <Editable
+              text={d}
+              path={[section, itemIndex, 'description', j]}
+              onEdit={onEdit}
+              placeholder="描述要点"
+            />
+            <button
+              className={styles.inlineRemoveBtn}
+              onClick={() => onRemoveDesc(section, itemIndex, j)}
+              title="删除"
+            >
+              &times;
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button className={styles.inlineAddBtn} onClick={() => onAddDesc(section, itemIndex)}>
+        + 添加描述
+      </button>
+    </div>
+  )
+}
+
+// WYSIWYG 简历编辑器 - 与预览布局一致，文本可直接点击编辑
+function ResumeEditor({ data, onEdit, onAddItem, onRemoveItem, onAddDesc, onRemoveDesc }) {
+  const b = data.basic_info || {}
+  const edu = data.education || []
+  const intern = data.internship_exp || []
+  const proj = data.project_exp || []
+  const strengths = data.personal_strengths || []
+
+  return (
+    <div>
+      {/* 头部信息 */}
+      <div className={styles.resumeHeader}>
+        <Editable
+          text={b.name}
+          path={['basic_info', 'name']}
+          onEdit={onEdit}
+          className={styles.resumeName}
+          placeholder="姓名"
+          tag="div"
+        />
+        <div className={styles.resumeContact}>
+          <Editable
+            text={b.email}
+            path={['basic_info', 'email']}
+            onEdit={onEdit}
+            placeholder="邮箱"
+          />
+          <Editable
+            text={b.phone}
+            path={['basic_info', 'phone']}
+            onEdit={onEdit}
+            placeholder="手机号"
+          />
+        </div>
+      </div>
+
+      {/* 教育经历 */}
+      <div className={styles.resumeSection}>
+        <div className={styles.sectionTitleRow}>
+          <h4 className={styles.resumeSectionTitle}>教育经历</h4>
+          <button className={styles.inlineAddBtn} onClick={() => onAddItem('education')}>+ 添加</button>
+        </div>
+        {edu.map((e, i) => (
+          <div key={i} className={styles.editableItem}>
+            <button
+              className={styles.itemRemoveBtn}
+              onClick={() => onRemoveItem('education', i)}
+              title="删除"
+            >
+              &times;
+            </button>
+            <div className={styles.resumeItemHeader}>
+              <div className={styles.resumeItemTitle}>
+                <Editable text={e.school} path={['education', i, 'school']} onEdit={onEdit} placeholder="学校" />
+                {e.degree ? ' · ' : ''}
+                <Editable text={e.degree} path={['education', i, 'degree']} onEdit={onEdit} placeholder="学位" />
+                {e.major ? ' · ' : ''}
+                <Editable text={e.major} path={['education', i, 'major']} onEdit={onEdit} placeholder="专业" />
+              </div>
+              <Editable
+                text={e.time}
+                path={['education', i, 'time']}
+                onEdit={onEdit}
+                className={styles.resumeItemDate}
+                placeholder="时间"
+              />
+            </div>
+            <div className={styles.resumeItemDesc}>
+              主修课程：<Editable text={e.courses} path={['education', i, 'courses']} onEdit={onEdit} placeholder="主修课程（选填）" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 实习经历 */}
+      <div className={styles.resumeSection}>
+        <div className={styles.sectionTitleRow}>
+          <h4 className={styles.resumeSectionTitle}>实习经历</h4>
+          <button className={styles.inlineAddBtn} onClick={() => onAddItem('internship_exp')}>+ 添加</button>
+        </div>
+        {intern.map((item, i) => (
+          <div key={i} className={styles.editableItem}>
+            <button
+              className={styles.itemRemoveBtn}
+              onClick={() => onRemoveItem('internship_exp', i)}
+              title="删除"
+            >
+              &times;
+            </button>
+            <div className={styles.resumeItemHeader}>
+              <Editable
+                text={item.role}
+                path={['internship_exp', i, 'role']}
+                onEdit={onEdit}
+                className={styles.resumeItemTitle}
+                placeholder="职位"
+              />
+              <Editable
+                text={item.time}
+                path={['internship_exp', i, 'time']}
+                onEdit={onEdit}
+                className={styles.resumeItemDate}
+                placeholder="时间"
+              />
+            </div>
+            <Editable
+              text={item.company}
+              path={['internship_exp', i, 'company']}
+              onEdit={onEdit}
+              className={styles.resumeItemSubtitle}
+              placeholder="公司名称"
+              tag="div"
+            />
+            <EditableDescList
+              items={item.description}
+              section="internship_exp"
+              itemIndex={i}
+              onEdit={onEdit}
+              onAddDesc={onAddDesc}
+              onRemoveDesc={onRemoveDesc}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 项目经历 */}
+      <div className={styles.resumeSection}>
+        <div className={styles.sectionTitleRow}>
+          <h4 className={styles.resumeSectionTitle}>项目经历</h4>
+          <button className={styles.inlineAddBtn} onClick={() => onAddItem('project_exp')}>+ 添加</button>
+        </div>
+        {proj.map((item, i) => (
+          <div key={i} className={styles.editableItem}>
+            <button
+              className={styles.itemRemoveBtn}
+              onClick={() => onRemoveItem('project_exp', i)}
+              title="删除"
+            >
+              &times;
+            </button>
+            <div className={styles.resumeItemHeader}>
+              <div className={styles.resumeItemTitle}>
+                <Editable text={item.name} path={['project_exp', i, 'name']} onEdit={onEdit} placeholder="项目名称" />
+                {item.role ? ' | ' : ''}
+                <Editable text={item.role} path={['project_exp', i, 'role']} onEdit={onEdit} placeholder="角色" />
+              </div>
+              <Editable
+                text={item.time}
+                path={['project_exp', i, 'time']}
+                onEdit={onEdit}
+                className={styles.resumeItemDate}
+                placeholder="时间"
+              />
+            </div>
+            <EditableDescList
+              items={item.description}
+              section="project_exp"
+              itemIndex={i}
+              onEdit={onEdit}
+              onAddDesc={onAddDesc}
+              onRemoveDesc={onRemoveDesc}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 个人优势 */}
+      <div className={styles.resumeSection}>
+        <div className={styles.sectionTitleRow}>
+          <h4 className={styles.resumeSectionTitle}>个人优势</h4>
+          <button className={styles.inlineAddBtn} onClick={() => onAddItem('personal_strengths')}>+ 添加</button>
+        </div>
+        <div className={styles.resumeItemDesc}>
+          <ul>
+            {strengths.map((s, i) => (
+              <li key={i} className={styles.editableListItem}>
+                <Editable
+                  text={s}
+                  path={['personal_strengths', i]}
+                  onEdit={onEdit}
+                  placeholder="个人优势"
+                />
+                <button
+                  className={styles.inlineRemoveBtn}
+                  onClick={() => onRemoveItem('personal_strengths', i)}
+                  title="删除"
+                >
+                  &times;
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }

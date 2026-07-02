@@ -332,21 +332,154 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* 编辑容器 */
-.editContainer {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
+/* ===== WYSIWYG 内联编辑样式 ===== */
 
-.editContainer .resumePreview {
-  flex: 1;
-  outline: none;
+/* 可编辑文本 - 默认状态 */
+.editable {
   cursor: text;
+  border-radius: 2px;
+  transition: background 0.15s, box-shadow 0.15s;
+  min-width: 1em;
+  outline: none;
+  display: inline;
 }
 
-.editContainer .resumePreview:focus {
-  box-shadow: 0 0 0 2px var(--primary);
+.editable:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.editable:focus {
+  background: rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* 空值占位 */
+.editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* 可编辑条目 - 悬停时显示删除按钮 */
+.editableItem {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 4px 28px 4px 0;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.editableItem:hover {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.editableItem:last-child {
+  margin-bottom: 0;
+}
+
+/* 条目删除按钮 - 右上角 */
+.itemRemoveBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.editableItem:hover .itemRemoveBtn {
+  opacity: 1;
+}
+
+.itemRemoveBtn:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* section 标题行 - 标题 + 添加按钮 */
+.sectionTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionTitleRow .resumeSectionTitle {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 内联添加按钮 */
+.inlineAddBtn {
+  padding: 2px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  opacity: 0;
+}
+
+.resumeSection:hover .inlineAddBtn,
+.sectionTitleRow:hover .inlineAddBtn {
+  opacity: 1;
+}
+
+.inlineAddBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+/* 可编辑列表项 */
+.editableListItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  position: relative;
+}
+
+.editableListItem .editable {
+  flex: 1;
+}
+
+/* 列表项删除按钮 */
+.inlineRemoveBtn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.editableListItem:hover .inlineRemoveBtn {
+  opacity: 1;
+}
+
+.inlineRemoveBtn:hover {
+  color: var(--error);
 }
 
 /* 简历头部 */
@@ -554,6 +687,24 @@
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 4px;
+  cursor: text;
+}
+
+.sessionTitle:hover {
+  color: var(--primary);
+}
+
+.sessionTitleInput {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  padding: 2px 4px;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
 }
 
 .historyDate,

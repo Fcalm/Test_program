@@ -83,10 +83,10 @@ body {
   background: var(--bg-primary);
 }
 
-/* ===== 隐藏滚动条但仍可滚动 ===== */
+/* ===== 滚动条样式 ===== */
 ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -94,7 +94,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: var(--gray-300);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
 }
 
 /* ===== 动画 ===== */
