@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI面试官 - 模拟面试</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff; --black: #000000;
+            --gray-50: #fafafa; --gray-100: #f5f5f5; --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4; --gray-400: #a3a3a3; --gray-500: #737373;
+            --gray-600: #525252; --gray-700: #404040; --gray-800: #262626;
+            --gray-900: #171717; --primary: #2563eb;
+        }
+        html, body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--white); color: var(--gray-900); height: 100%; overflow: hidden; }
+        .container { display: flex; height: 100vh; overflow: hidden; }
+
+        /* 左侧导航栏 */
+        .sidebar { width: 72px; min-width: 72px; background: var(--white); border-right: 1px solid var(--gray-200); padding: 24px 12px; display: flex; flex-direction: column; align-items: center; }
+        .sidebar-avatar { width: 40px; height: 40px; border-radius: 10px; background: var(--gray-900); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+        .sidebar-avatar svg { width: 22px; height: 22px; fill: var(--white); }
+        .nav-back { width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; cursor: pointer; text-decoration: none; }
+        .nav-back:hover { background: var(--gray-200); }
+        .nav-back svg { width: 18px; height: 18px; fill: var(--gray-600); }
+        .nav-divider { width: 24px; height: 1px; background: var(--gray-200); margin-bottom: 24px; }
+
+        /* 主内容区 */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 12px; background: var(--white); flex-shrink: 0; }
+        .chat-header-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--gray-900); display: flex; align-items: center; justify-content: center; }
+        .chat-header-icon svg { width: 18px; height: 18px; fill: var(--white); }
+        .chat-header-info h2 { font-size: 16px; font-weight: 600; }
+        .chat-header-info p { font-size: 12px; color: var(--gray-400); }
+        .header-actions { margin-left: auto; display: flex; gap: 8px; }
+        .header-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--gray-200); background: var(--white); cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; color: var(--gray-600); transition: all 0.2s; }
+        .header-btn:hover { border-color: var(--gray-400); color: var(--gray-900); }
+
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .message { display: flex; gap: 10px; max-width: 80%; }
+        .message.ai { align-self: flex-start; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message-avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .message.ai .message-avatar { background: var(--gray-900); }
+        .message.user .message-avatar { background: var(--gray-300); }
+        .message-avatar svg { width: 16px; height: 16px; fill: var(--white); }
+        .message-content { padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+        .message.ai .message-content { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-700); }
+        .message.user .message-content { background: var(--gray-900); color: var(--white); }
+        .message-content p { margin-bottom: 8px; }
+        .message-content p:last-child { margin-bottom: 0; }
+        .message-content ul { margin: 8px 0; padding-left: 16px; }
+        .message-content li { margin-bottom: 4px; }
+
+        .chat-input { padding: 12px 20px 16px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; align-items: flex-end; background: var(--white); flex-shrink: 0; }
+        .chat-input-wrapper { flex: 1; background: var(--gray-100); border-radius: 12px; border: 1px solid transparent; transition: all 0.2s; }
+        .chat-input-wrapper:focus-within { border-color: var(--gray-400); background: var(--white); }
+        .chat-input textarea { width: 100%; padding: 14px 16px; border: none; background: transparent; resize: none; font-size: 14px; line-height: 1.5; font-family: 'Inter', sans-serif; outline: none; min-height: 44px; max-height: 120px; }
+        .send-btn { width: 44px; height: 44px; border-radius: 12px; border: none; background: var(--gray-900); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .send-btn:hover { background: var(--gray-800); }
+        .send-btn svg { width: 18px; height: 18px; fill: var(--white); }
+
+        .typing-cursor { display: inline-block; animation: blink 0.8s infinite; color: var(--gray-400); font-weight: 100; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* 书籍翻页等待动画 */
+        .book-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+        }
+        .book-loading .book {
+            width: 24px;
+            height: 18px;
+            position: relative;
+            perspective: 100px;
+        }
+        .book-loading .book-page {
+            position: absolute;
+            width: 12px;
+            height: 18px;
+            background: var(--gray-400);
+            border-radius: 0 2px 2px 0;
+            transform-origin: left center;
+            animation: flipPage 1.4s ease-in-out infinite;
+        }
+        .book-loading .book-page:nth-child(1) { animation-delay: 0s; background: var(--gray-300); }
+        .book-loading .book-page:nth-child(2) { animation-delay: 0.2s; background: var(--gray-400); }
+        .book-loading .book-page:nth-child(3) { animation-delay: 0.4s; background: var(--gray-500); }
+        @keyframes flipPage {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-180deg); }
+        }
+        .book-loading .loading-text {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-left: 4px;
+        }
+        .book-loading .loading-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .book-loading .loading-dots span {
+            width: 4px;
+            height: 4px;
+            background: var(--gray-400);
+            border-radius: 50%;
+            animation: dotPulse 1.4s ease-in-out infinite;
+        }
+        .book-loading .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .book-loading .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Thinking 样式 */
+        .message-thinking {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+            border: 1px solid var(--gray-200);
+            border-left: 3px solid var(--gray-400);
+            border-radius: 0 8px 8px 0;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .message-thinking:hover {
+            background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
+            border-left-color: var(--gray-600);
+        }
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .thinking-header svg { fill: var(--gray-400); }
+        .thinking-content {
+            font-size: 12px;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            white-space: pre-wrap;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+            padding: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
+        }
+        .message-thinking.collapsed .thinking-content {
+            max-height: 0;
+            margin-top: 0;
+            padding: 0;
+        }
+        .thinking-toggle {
+            font-size: 10px;
+            color: var(--gray-400);
+            margin-left: auto;
+        }
+
+        .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--gray-900); color: var(--white); padding: 12px 24px; border-radius: 10px; font-size: 14px; transition: transform 0.3s; z-index: 1000; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: #ef4444; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="sidebar-avatar">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <a href="ai-interview.html" class="nav-back" title="返回面试列表">
+                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </a>
+            <div class="nav-divider"></div>
+        </nav>
+
+        <main class="main-content">
+            <header class="chat-header">
+                <div class="chat-header-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                </div>
+                <div class="chat-header-info">
+                    <h2>AI 面试官</h2>
+                    <p id="interviewTitle">模拟面试进行中</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="endInterview()">结束面试</button>
+                </div>
+            </header>
+
+            <div class="chat-messages" id="chatMessages"></div>
+
+            <div class="chat-input">
+                <div class="chat-input-wrapper">
+                    <textarea id="messageInput" placeholder="输入你的回答..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                </div>
+                <button class="send-btn" title="发送" onclick="sendMessage()">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let sessionId = null;
+        let isLoading = false;
+
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+
+        function addMessage(content, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            const avatar = type === 'ai'
+                ? '<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>'
+                : '<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+            div.innerHTML = `<div class="message-avatar">${avatar}</div><div class="message-content"><p>${escapeHtml(content).replace(/\n/g, '<br>')}</p></div>`;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function createStreamMessage() {
+            const chatMessages = document.getElementById('chatMessages');
+            const id = 'stream-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'message ai';
+            div.innerHTML = `
+                <div class="message-avatar"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg></div>
+                <div class="message-body">
+                    <div class="message-thinking" id="${id}-thinking" style="display: none;">
+                        <div class="thinking-header">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                            <span>思考过程</span>
+                            <span class="thinking-toggle">点击展开/折叠</span>
+                        </div>
+                        <div class="thinking-content" id="${id}-thinking-content"></div>
+                    </div>
+                    <div class="message-content" id="${id}-content">
+                        <div class="book-loading">
+                            <div class="book">
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                            </div>
+                            <span class="loading-text">思考中</span>
+                            <span class="loading-dots"><span></span><span></span><span></span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return id;
+        }
+
+        function updateStreamMessage(id, thinking, content, isThinking) {
+            const thinkingDiv = document.getElementById(id + '-thinking');
+            const thinkingContent = document.getElementById(id + '-thinking-content');
+            const contentDiv = document.getElementById(id + '-content');
+
+            if (thinking && thinkingDiv) {
+                thinkingDiv.style.display = 'block';
+                thinkingContent.textContent = thinking;
+            }
+
+            if (content && contentDiv) {
+                contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>') + '<span class="typing-cursor">▊</span>';
+            }
+
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function finalizeStreamMessage(id, thinking, content) {
+            const thinkingDiv = document.getElementById(id + '-thinking');
+            const contentDiv = document.getElementById(id + '-content');
+
+            if (!thinking && thinkingDiv) {
+                thinkingDiv.remove();
+            }
+
+            if (contentDiv) {
+                contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
+            }
+
+            if (thinking && thinkingDiv) {
+                thinkingDiv.onclick = function() {
+                    this.classList.toggle('collapsed');
+                };
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || isLoading) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            isLoading = true;
+
+            const streamId = createStreamMessage();
+            let thinkingText = '';
+            let contentText = '';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/agent/chat/stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        message: message,
+                        scenario: 'interview',
+                        session_id: sessionId || undefined,
+                    })
+                });
+
+                if (!response.ok) throw new Error('请求失败');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.type === 'thinking') {
+                                    thinkingText += data.data;
+                                    updateStreamMessage(streamId, thinkingText, contentText, true);
+                                } else if (data.type === 'content') {
+                                    contentText += data.data;
+                                    updateStreamMessage(streamId, thinkingText, contentText, false);
+                                } else if (data.type === 'done') {
+                                    finalizeStreamMessage(streamId, thinkingText, contentText);
+                                    if (data.data && data.data.session_id) {
+                                        sessionId = data.data.session_id;
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+            } catch (err) {
+                finalizeStreamMessage(streamId, thinkingText, contentText || `处理异常：${err.message}`);
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px';
+        }
+
+        async function loadSession() {
+            if (!sessionId) return;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/agent/sessions/${sessionId}/load`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('加载会话失败');
+                const state = await response.json();
+
+                // 渲染历史消息
+                const messages = state.messages || [];
+                for (const msg of messages) {
+                    if (msg.role === 'user') {
+                        addMessage(msg.content, 'user');
+                    } else if (msg.role === 'assistant' && msg.content) {
+                        addMessage(msg.content, 'ai');
+                    }
+                }
+
+                // 更新标题
+                if (state.stage) {
+                    document.getElementById('interviewTitle').textContent = state.stage;
+                }
+            } catch (err) {
+                console.error('加载会话失败:', err);
+            }
+        }
+
+        function endInterview() {
+            if (confirm('确定要结束面试吗？')) {
+                window.location.href = 'ai-interview.html';
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = 'login.html'; return; }
+
+            // 从 URL 获取 session_id
+            const params = new URLSearchParams(window.location.search);
+            sessionId = params.get('session_id');
+
+            if (sessionId) {
+                // 恢复已有会话
+                await loadSession();
+            } else {
+                // 新会话，显示欢迎消息
+                addMessage('你好！我是 AI 面试官。请告诉我你要面试的岗位，我们开始模拟面试。', 'ai');
+            }
+        });
+    </script>
+</body>
+</html>

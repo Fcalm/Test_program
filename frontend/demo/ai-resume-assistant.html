@@ -132,6 +132,58 @@
         .message-content { padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
         .message.ai .message-content { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-700); }
         .message.user .message-content { background: var(--gray-900); color: var(--white); }
+
+        /* 书籍翻页等待动画 */
+        .book-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+        }
+        .book-loading .book {
+            width: 24px;
+            height: 18px;
+            position: relative;
+            perspective: 100px;
+        }
+        .book-loading .book-page {
+            position: absolute;
+            width: 12px;
+            height: 18px;
+            background: var(--gray-400);
+            border-radius: 0 2px 2px 0;
+            transform-origin: left center;
+            animation: flipPage 1.4s ease-in-out infinite;
+        }
+        .book-loading .book-page:nth-child(1) { animation-delay: 0s; background: var(--gray-300); }
+        .book-loading .book-page:nth-child(2) { animation-delay: 0.2s; background: var(--gray-400); }
+        .book-loading .book-page:nth-child(3) { animation-delay: 0.4s; background: var(--gray-500); }
+        @keyframes flipPage {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-180deg); }
+        }
+        .book-loading .loading-text {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-left: 4px;
+        }
+        .book-loading .loading-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .book-loading .loading-dots span {
+            width: 4px;
+            height: 4px;
+            background: var(--gray-400);
+            border-radius: 50%;
+            animation: dotPulse 1.4s ease-in-out infinite;
+        }
+        .book-loading .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .book-loading .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
         .message-content p { margin-bottom: 8px; }
         .message-content p:last-child { margin-bottom: 0; }
         .message-content ul { margin: 8px 0; padding-left: 16px; }
@@ -386,6 +438,92 @@
 
         .history-panel { display: none; }
         .history-panel.active { display: block; }
+
+        /* 会话管理样式 */
+        .session-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border: 1px solid var(--gray-200); border-radius: 10px;
+            margin-bottom: 8px; background: var(--white); cursor: pointer; transition: all 0.2s ease;
+        }
+        .session-item:hover { border-color: var(--gray-300); background: var(--gray-50); }
+        .session-item.active { border-color: var(--gray-900); background: var(--gray-50); }
+        .session-item-info { flex: 1; }
+        .session-item-title { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+        .session-item-meta { font-size: 11px; color: var(--gray-400); margin-top: 3px; display: flex; gap: 10px; }
+        .session-item-actions { display: flex; gap: 6px; }
+        .session-btn {
+            width: 28px; height: 28px; border-radius: 6px; border: none;
+            background: var(--gray-100); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease;
+        }
+        .session-btn:hover { background: var(--gray-200); }
+        .session-btn svg { width: 14px; height: 14px; fill: var(--gray-500); }
+        .session-btn.delete:hover { background: #fef2f2; }
+        .session-btn.delete svg { fill: #ef4444; }
+        .session-empty { text-align: center; padding: 40px 20px; color: var(--gray-400); font-size: 13px; }
+        .session-empty svg { width: 40px; height: 40px; fill: var(--gray-300); margin-bottom: 12px; }
+
+        /* 首页大聊天框 */
+        .welcome-view {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            padding: 40px;
+        }
+        .welcome-content {
+            width: 100%; max-width: 640px; text-align: center;
+        }
+        .welcome-icon {
+            width: 64px; height: 64px; border-radius: 16px; background: var(--gray-900);
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+        }
+        .welcome-icon svg { width: 32px; height: 32px; fill: var(--white); }
+        .welcome-title {
+            font-size: 28px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; letter-spacing: -0.02em;
+        }
+        .welcome-desc {
+            font-size: 15px; color: var(--gray-500); margin-bottom: 32px;
+        }
+        .welcome-input-box {
+            background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px;
+            padding: 16px; text-align: left; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            transition: border-color 0.2s;
+        }
+        .welcome-input-box:focus-within { border-color: var(--gray-400); }
+        .welcome-input-box textarea {
+            width: 100%; border: none; outline: none; resize: none; font-size: 15px;
+            font-family: 'Inter', sans-serif; line-height: 1.6; color: var(--gray-900);
+            min-height: 72px; background: transparent;
+        }
+        .welcome-input-box textarea::placeholder { color: var(--gray-400); }
+        .welcome-input-actions {
+            display: flex; justify-content: space-between; align-items: center; margin-top: 8px;
+        }
+        .welcome-send-btn {
+            width: 36px; height: 36px; border-radius: 10px; border: none;
+            background: var(--gray-900); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .welcome-send-btn:hover { background: var(--gray-800); }
+        .welcome-send-btn svg { width: 18px; height: 18px; fill: var(--white); }
+        .welcome-hints {
+            display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap;
+        }
+        .hint-tag {
+            padding: 8px 16px; background: var(--white); border: 1px solid var(--gray-200);
+            border-radius: 20px; font-size: 13px; color: var(--gray-600); cursor: pointer;
+            transition: all 0.2s;
+        }
+        .hint-tag:hover { border-color: var(--gray-400); color: var(--gray-900); background: var(--gray-50); }
+
+        /* 聊天视图 */
+        .chat-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+        .chat-header-actions { display: flex; gap: 8px; align-items: center; }
+        .header-action-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            background: var(--gray-100); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .header-action-btn:hover { background: var(--gray-200); }
+        .header-action-btn svg { width: 16px; height: 16px; fill: var(--gray-600); }
         .history-empty { text-align: center; padding: 40px 20px; color: var(--gray-400); font-size: 13px; }
         .history-empty svg { width: 40px; height: 40px; fill: var(--gray-300); margin-bottom: 12px; }
 
@@ -689,6 +827,12 @@
                     </svg>
                     <span class="tooltip">AI面试官</span>
                 </a>
+                <div class="sidebar-nav-item" onclick="toggleSessionPanel()" id="sessionNavBtn">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM7 9h2v2H7V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9z"/>
+                    </svg>
+                    <span class="tooltip">会话管理</span>
+                </div>
             </div>
         </nav>
 
@@ -696,88 +840,111 @@
         <main class="main-content">
             <!-- 左侧聊天区域 -->
             <section class="chat-section">
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <div class="chat-header-icon">
+                <!-- 首页视图：大聊天框 -->
+                <div class="welcome-view" id="welcomeView">
+                    <div class="welcome-content">
+                        <div class="welcome-icon">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                             </svg>
                         </div>
-                        <div class="chat-header-info">
-                            <h2>AI简历助手</h2>
-                            <p>智能优化您的简历</p>
+                        <h1 class="welcome-title">AI 简历助手</h1>
+                        <p class="welcome-desc">告诉我你的经历，我来帮你打造专业简历</p>
+                        <div class="welcome-input-box">
+                            <textarea id="welcomeInput" placeholder="粘贴 JD、描述你的经历，或直接说"帮我生成简历"..." rows="3" onkeydown="handleWelcomeKeyDown(event)"></textarea>
+                            <div class="welcome-input-actions">
+                                <button class="input-action-btn" title="上传简历" onclick="uploadResume()">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                                    </svg>
+                                </button>
+                                <button class="welcome-send-btn" title="发送" onclick="sendWelcomeMessage()">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <button class="help-btn" title="帮助" onclick="showHelp()">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="chat-messages" id="chatMessages">
-                    <!-- 静态开场白 -->
-                    <div class="message ai">
-                        <div class="message-avatar">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                            </svg>
-                        </div>
-                        <div class="message-content">
-                            <p>您好！我是 AI 简历助手，很高兴为您服务！</p>
-                            <p>我可以帮您：</p>
-                            <ul>
-                                <li>📋 分析 JD（职位描述）并提取关键信息</li>
-                                <li>📝 根据 JD 定制专属简历</li>
-                                <li>📊 计算简历与 JD 的匹配分数</li>
-                                <li>💡 提供简历优化建议</li>
-                            </ul>
-                            <p>如果要生成简历或分析简历，请先发送 JD 文本。</p>
+                        <div class="welcome-hints">
+                            <span class="hint-tag" onclick="quickSend('帮我生成简历')">帮我生成简历</span>
+                            <span class="hint-tag" onclick="quickSend('分析这个 JD')">分析 JD</span>
+                            <span class="hint-tag" onclick="quickSend('优化我的简历')">优化简历</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 上传文件状态显示 -->
-                <div class="upload-status" id="uploadStatus" style="display: none;">
-                    <div class="upload-status-content">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
-                        </svg>
-                        <span id="uploadFileName">简历.pdf</span>
-                        <button class="upload-remove-btn" onclick="removeUploadedFile()" title="移除">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="chat-input">
-                    <div class="chat-input-wrapper">
-                        <textarea id="messageInput" placeholder="输入您的问题..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
-                        <div class="chat-input-actions">
-                            <button class="input-action-btn" title="上传简历" onclick="uploadResume()">
+                <!-- 聊天视图 -->
+                <div class="chat-view" id="chatView" style="display: none;">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <div class="chat-header-icon">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                                </svg>
+                            </div>
+                            <div class="chat-header-info">
+                                <h2>AI简历助手</h2>
+                                <p id="sessionInfo">新会话</p>
+                            </div>
+                        </div>
+                        <div class="chat-header-actions">
+                            <button class="header-action-btn" title="新建会话" onclick="newSession()">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                                 </svg>
                             </button>
-                            <button class="input-action-btn" title="语音输入" onclick="voiceInput()">
+                            <button class="help-btn" title="帮助" onclick="showHelp()">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    <div class="send-btn-col">
-                        <button class="clear-chat-btn" title="清空聊天" onclick="clearChat()">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+
+                    <div class="chat-messages" id="chatMessages"></div>
+
+                    <!-- 上传文件状态显示 -->
+                    <div class="upload-status" id="uploadStatus" style="display: none;">
+                        <div class="upload-status-content">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
                             </svg>
-                        </button>
-                        <button class="send-btn" title="发送" onclick="sendMessage()">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                            </svg>
-                        </button>
+                            <span id="uploadFileName">简历.pdf</span>
+                            <button class="upload-remove-btn" onclick="removeUploadedFile()" title="移除">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <div class="chat-input-wrapper">
+                            <textarea id="messageInput" placeholder="输入您的问题..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                            <div class="chat-input-actions">
+                                <button class="input-action-btn" title="上传简历" onclick="uploadResume()">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                                    </svg>
+                                </button>
+                                <button class="input-action-btn" title="语音输入" onclick="voiceInput()">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="send-btn-col">
+                            <button class="clear-chat-btn" title="清空聊天" onclick="clearChat()">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </button>
+                            <button class="send-btn" title="发送" onclick="sendMessage()">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -811,6 +978,7 @@
                     <div class="doc-tab active" onclick="switchTab('preview')">预览</div>
                     <div class="doc-tab" onclick="switchTab('edit')">编辑</div>
                     <div class="doc-tab" onclick="switchTab('history')">历史</div>
+                    <div class="doc-tab" onclick="switchTab('sessions')">会话</div>
                 </div>
 
                 <div class="document-content">
@@ -820,6 +988,9 @@
                     </div>
                     <div class="history-panel" id="historyPanel">
                         <div id="historyList"></div>
+                    </div>
+                    <div class="history-panel" id="sessionsPanel">
+                        <div id="sessionsList"></div>
                     </div>
                 </div>
 
@@ -951,6 +1122,7 @@
         let uploadedFile = null; // 存储上传的简历文件
         let uploadedFileId = null; // 存储上传后的文件 ID
         let currentResumeData = null; // 存储当前简历数据
+        let currentSessionId = null; // 当前会话 ID
 
         // XSS 防御：转义 HTML 特殊字符
         function escapeHtml(str) {
@@ -974,6 +1146,7 @@
                 localStorage.removeItem('token'); localStorage.removeItem('isLoggedIn');
                 window.location.href = 'login.html'; throw new Error('未登录');
             }
+            if (res.status === 204) return null;
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || '请求失败');
             return data;
@@ -1239,6 +1412,7 @@
                         message: message,  // 原始消息（不含文件信息）
                         file_ids: fileIds,
                         scenario: 'resume',
+                        session_id: currentSessionId || undefined,
                     })
                 });
 
@@ -1284,6 +1458,10 @@
                                     // 流结束
                                     finalizeStreamMessage(messageId, thinkingText, contentText);
                                     chatHistory.push({ role: 'assistant', content: contentText });
+                                    // 保存 session_id
+                                    if (data.data && data.data.session_id) {
+                                        currentSessionId = data.data.session_id;
+                                    }
                                 }
                             } catch (e) {
                                 // 忽略解析错误
@@ -1322,7 +1500,15 @@
                         <div class="thinking-content" id="${id}-thinking-content"></div>
                     </div>
                     <div class="message-content" id="${id}-content">
-                        <span class="typing-cursor">▊</span>
+                        <div class="book-loading">
+                            <div class="book">
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                            </div>
+                            <span class="loading-text">思考中</span>
+                            <span class="loading-dots"><span></span><span></span><span></span></span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1339,9 +1525,11 @@
             if (thinking && thinkingDiv) {
                 thinkingDiv.style.display = 'block';
                 thinkingContent.textContent = thinking;
+                // 收到思考内容时，如果内容区还是加载动画，保持动画
             }
 
             if (content && contentDiv) {
+                // 收到正式内容时，移除加载动画，显示内容
                 contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>') + '<span class="typing-cursor">▊</span>';
             }
 
@@ -1411,7 +1599,7 @@
             const id = 'loading-' + Date.now();
             div.id = id;
             div.className = 'message ai';
-            div.innerHTML = `<div class="message-avatar"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div><div class="message-content"><p>思考中...</p></div>`;
+            div.innerHTML = `<div class="message-avatar"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div><div class="message-content"><div class="book-loading"><div class="book"><div class="book-page"></div><div class="book-page"></div><div class="book-page"></div></div><span class="loading-text">思考中</span><span class="loading-dots"><span></span><span></span><span></span></span></div></div>`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             return id;
@@ -1429,14 +1617,73 @@
 
         function clearChat() {
             if (confirm('确定要清空聊天记录吗？')) {
-                // 保留开场白，删除其他消息
-                const chatMessages = document.getElementById('chatMessages');
-                const firstMessage = chatMessages.firstElementChild;
-                chatMessages.innerHTML = '';
-                if (firstMessage) {
-                    chatMessages.appendChild(firstMessage);
+                newSession();
+            }
+        }
+
+        // ===== 会话管理 =====
+        function toggleSessionPanel() {
+            switchTab('sessions');
+        }
+
+        async function loadSessions() {
+            const sessionsList = document.getElementById('sessionsList');
+            try {
+                const data = await apiFetch('/agent/sessions?scenario=resume');
+                const sessions = data.sessions || [];
+
+                if (sessions.length === 0) {
+                    sessionsList.innerHTML = `
+                        <div class="session-empty">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
+                            </svg>
+                            <p>暂无会话记录</p>
+                            <p style="font-size:11px;margin-top:4px;">开始对话后会自动保存会话</p>
+                        </div>
+                    `;
+                    return;
                 }
-                chatHistory = [];
+
+                sessionsList.innerHTML = sessions.map(s => {
+                    const isActive = currentSessionId === s.session_id;
+                    const date = s.updated_at ? new Date(s.updated_at) : new Date();
+                    const timeStr = date.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const stageText = s.stage || '对话中';
+                    return `
+                        <div class="session-item ${isActive ? 'active' : ''}">
+                            <div class="session-item-info" onclick="restoreSession('${escapeHtml(s.session_id)}')">
+                                <div class="session-item-title">${isActive ? '● 当前会话' : '会话 #' + s.session_id.slice(0, 8)}</div>
+                                <div class="session-item-meta">
+                                    <span>${timeStr}</span>
+                                    <span>${stageText}</span>
+                                    <span>${s.turn_count} 轮</span>
+                                </div>
+                            </div>
+                            <div class="session-item-actions">
+                                <button class="session-btn delete" title="删除" onclick="event.stopPropagation(); deleteSession('${escapeHtml(s.session_id)}')">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                sessionsList.innerHTML = `<div class="session-empty"><p>加载失败：${escapeHtml(err.message)}</p></div>`;
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm('确定要删除这个会话吗？')) return;
+            try {
+                await apiFetch(`/agent/sessions/${sessionId}`, { method: 'DELETE' });
+                if (currentSessionId === sessionId) {
+                    currentSessionId = null;
+                }
+                showToast('会话已删除');
+                loadSessions();
+            } catch (err) {
+                showToast('删除失败：' + err.message, 'error');
             }
         }
 
@@ -1596,8 +1843,9 @@
         function switchTab(tabName) {
             document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
             // 高亮目标 tab
+            const tabMap = { preview: '预览', edit: '编辑', history: '历史', sessions: '会话' };
             document.querySelectorAll('.doc-tab').forEach(t => {
-                if (t.textContent.trim() === ({ preview: '预览', edit: '编辑', history: '历史' }[tabName])) {
+                if (t.textContent.trim() === tabMap[tabName]) {
                     t.classList.add('active');
                 }
             });
@@ -1605,16 +1853,20 @@
             const editHint = document.getElementById('editHint');
             const previewPanel = document.getElementById('previewPanel');
             const historyPanel = document.getElementById('historyPanel');
+            const sessionsPanel = document.getElementById('sessionsPanel');
             if (tabName === 'preview') {
                 preview.setAttribute('contenteditable', 'false'); editHint.classList.remove('visible');
-                previewPanel.style.display = 'block'; historyPanel.classList.remove('active');
+                previewPanel.style.display = 'block'; historyPanel.classList.remove('active'); sessionsPanel.classList.remove('active');
             } else if (tabName === 'edit') {
                 if (!hasResume) { showToast('请先通过AI助手生成简历', 'error'); return; }
                 preview.setAttribute('contenteditable', 'true'); editHint.classList.add('visible');
-                previewPanel.style.display = 'block'; historyPanel.classList.remove('active'); preview.focus();
+                previewPanel.style.display = 'block'; historyPanel.classList.remove('active'); sessionsPanel.classList.remove('active'); preview.focus();
             } else if (tabName === 'history') {
                 preview.setAttribute('contenteditable', 'false'); editHint.classList.remove('visible');
-                previewPanel.style.display = 'none'; historyPanel.classList.add('active'); loadHistory();
+                previewPanel.style.display = 'none'; historyPanel.classList.add('active'); sessionsPanel.classList.remove('active'); loadHistory();
+            } else if (tabName === 'sessions') {
+                preview.setAttribute('contenteditable', 'false'); editHint.classList.remove('visible');
+                previewPanel.style.display = 'none'; historyPanel.classList.remove('active'); sessionsPanel.classList.add('active'); loadSessions();
             }
         }
 
@@ -1696,10 +1948,112 @@
             this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
 
+        // ===== 视图切换 =====
+        function showWelcomeView() {
+            document.getElementById('welcomeView').style.display = 'flex';
+            document.getElementById('chatView').style.display = 'none';
+        }
+
+        function showChatView() {
+            document.getElementById('welcomeView').style.display = 'none';
+            document.getElementById('chatView').style.display = 'flex';
+            document.getElementById('messageInput').focus();
+        }
+
+        // ===== 首页大聊天框 =====
+        function handleWelcomeKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendWelcomeMessage();
+            }
+        }
+
+        function quickSend(text) {
+            document.getElementById('welcomeInput').value = text;
+            sendWelcomeMessage();
+        }
+
+        async function sendWelcomeMessage() {
+            const input = document.getElementById('welcomeInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // 切换到聊天视图
+            showChatView();
+
+            // 将消息填入聊天输入框并发送
+            document.getElementById('messageInput').value = message;
+            input.value = '';
+            await sendMessage();
+        }
+
+        // ===== 新建会话 =====
+        function newSession() {
+            currentSessionId = null;
+            // 清空聊天区域
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            document.getElementById('sessionInfo').textContent = '新会话';
+            showWelcomeView();
+        }
+
+        // ===== 恢复会话 =====
+        async function restoreSession(sessionId) {
+            try {
+                const state = await apiFetch(`/agent/sessions/${sessionId}/load`);
+                if (!state || !state.messages) {
+                    showToast('会话数据为空', 'error');
+                    return;
+                }
+
+                currentSessionId = sessionId;
+
+                // 清空聊天区域
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+
+                // 渲染历史消息
+                const messages = state.messages;
+                for (const msg of messages) {
+                    if (msg.role === 'user') {
+                        addMessage(msg.content, 'user');
+                    } else if (msg.role === 'assistant' && msg.content) {
+                        addMessage(msg.content, 'ai');
+                    }
+                }
+
+                // 更新会话信息
+                const stage = state.stage || '';
+                document.getElementById('sessionInfo').textContent = stage || `会话 #${sessionId.slice(0, 8)}`;
+
+                showToast('会话已恢复');
+                showChatView();
+            } catch (err) {
+                showToast('恢复会话失败：' + err.message, 'error');
+            }
+        }
+
+        // ===== 初始化 =====
         (async function init() {
             const token = localStorage.getItem('token');
             if (!token) { window.location.href = 'login.html'; return; }
             await loadResume();
+
+            // 检查是否有已有会话，如果有则加载最近的一次
+            try {
+                const data = await apiFetch('/agent/sessions?scenario=resume');
+                const sessions = data.sessions || [];
+                if (sessions.length > 0) {
+                    // 加载最近的会话
+                    await restoreSession(sessions[0].session_id);
+                } else {
+                    // 无会话，显示首页
+                    showWelcomeView();
+                }
+            } catch (err) {
+                // 加载失败，显示首页
+                showWelcomeView();
+            }
         })();
     </script>
 </body>

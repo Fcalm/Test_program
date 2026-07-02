@@ -299,13 +299,14 @@ function addThinkingIndicator() {
             ${AI_AVATAR_SVG}
         </div>
         <div class="message-body">
-            <div class="thinking-indicator">
-                <div class="thinking-dots">
-                    <div class="thinking-dot"></div>
-                    <div class="thinking-dot"></div>
-                    <div class="thinking-dot"></div>
+            <div class="book-loading">
+                <div class="book">
+                    <div class="book-page"></div>
+                    <div class="book-page"></div>
+                    <div class="book-page"></div>
                 </div>
-                <span class="thinking-text">面试官正在思考...</span>
+                <span class="loading-text">思考中</span>
+                <span class="loading-dots"><span></span><span></span><span></span></span>
             </div>
         </div>
     `;
@@ -332,8 +333,24 @@ function createStreamMessage() {
             ${AI_AVATAR_SVG}
         </div>
         <div class="message-body">
+            <div class="message-thinking" id="${id}-thinking" style="display: none;">
+                <div class="thinking-header">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+                    <span>思考过程</span>
+                    <span class="thinking-toggle">点击展开/折叠</span>
+                </div>
+                <div class="thinking-content" id="${id}-thinking-content"></div>
+            </div>
             <div class="message-content" id="${id}-content">
-                <span class="typing-cursor">▊</span>
+                <div class="book-loading">
+                    <div class="book">
+                        <div class="book-page"></div>
+                        <div class="book-page"></div>
+                        <div class="book-page"></div>
+                    </div>
+                    <span class="loading-text">思考中</span>
+                    <span class="loading-dots"><span></span><span></span><span></span></span>
+                </div>
             </div>
         </div>
     `;
@@ -343,22 +360,43 @@ function createStreamMessage() {
 }
 
 /** 更新流式消息内容 */
-function updateStreamMessage(id, content) {
-    const el = document.getElementById(id + '-content');
-    if (el) {
-        el.innerHTML = formatContent(content) + '<span class="typing-cursor">▊</span>';
-        scrollToBottom();
+function updateStreamMessage(id, thinking, content, isThinking) {
+    const thinkingDiv = document.getElementById(id + '-thinking');
+    const thinkingContent = document.getElementById(id + '-thinking-content');
+    const contentDiv = document.getElementById(id + '-content');
+
+    if (thinking && thinkingDiv) {
+        thinkingDiv.style.display = 'block';
+        thinkingContent.textContent = thinking;
     }
+
+    if (content && contentDiv) {
+        contentDiv.innerHTML = formatContent(content) + '<span class="typing-cursor">▊</span>';
+    }
+
+    scrollToBottom();
 }
 
 /** 完成流式消息 */
-function finalizeStreamMessage(id, content, tips) {
+function finalizeStreamMessage(id, thinking, content, tips) {
     const el = document.getElementById(id);
     if (!el) return;
 
+    const thinkingDiv = document.getElementById(id + '-thinking');
     const contentEl = document.getElementById(id + '-content');
+
+    if (!thinking && thinkingDiv) {
+        thinkingDiv.remove();
+    }
+
     if (contentEl) {
         contentEl.innerHTML = formatContent(content);
+    }
+
+    if (thinking && thinkingDiv) {
+        thinkingDiv.onclick = function() {
+            this.classList.toggle('collapsed');
+        };
     }
 
     // 添加 Tips
@@ -564,6 +602,7 @@ async function processSSEStream(response) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let thinkingText = '';
     let contentText = '';
     let tipsText = '';
     let streamId = null;
@@ -587,19 +626,23 @@ async function processSSEStream(response) {
             try {
                 const data = JSON.parse(jsonStr);
 
+                // 思考过程
+                if (data.type === 'thinking') {
+                    if (!streamId) {
+                        streamId = createStreamMessage();
+                    }
+                    thinkingText += data.data;
+                    updateStreamMessage(streamId, thinkingText, contentText, true);
+                }
+
                 // 流式内容
                 if (data.type === 'content') {
                     if (!streamId) {
                         streamId = createStreamMessage();
                     }
                     contentText += data.data;
-                    updateStreamMessage(streamId, contentText);
+                    updateStreamMessage(streamId, thinkingText, contentText, false);
                     isContent = true;
-                }
-
-                // 思考过程
-                if (data.type === 'thinking') {
-                    // 可选：显示思考过程
                 }
 
                 // Tips 提示
@@ -611,13 +654,14 @@ async function processSSEStream(response) {
                 // 轮次切换标记
                 if (data.type === 'round_end') {
                     if (streamId) {
-                        finalizeStreamMessage(streamId, contentText, tipsText || null);
+                        finalizeStreamMessage(streamId, thinkingText, contentText, tipsText || null);
                         state.chatHistory.push({ role: 'assistant', content: contentText });
                     }
                     addRoundTransition(state.round + 1);
                     state.roundSwitched = true;
                     state.round = 2;
                     updateRoundDisplay();
+                    thinkingText = '';
                     contentText = '';
                     tipsText = '';
                     streamId = null;
@@ -626,7 +670,7 @@ async function processSSEStream(response) {
                 // 面试结束标记
                 if (data.type === 'interview_end') {
                     if (streamId) {
-                        finalizeStreamMessage(streamId, contentText, tipsText || null);
+                        finalizeStreamMessage(streamId, thinkingText, contentText, tipsText || null);
                         state.chatHistory.push({ role: 'assistant', content: contentText });
                     }
                     state.interviewEnded = true;
@@ -643,7 +687,7 @@ async function processSSEStream(response) {
 
     // 流正常结束（非轮次切换/面试结束）
     if (streamId && !state.roundSwitched && !state.interviewEnded) {
-        finalizeStreamMessage(streamId, contentText, tipsText || null);
+        finalizeStreamMessage(streamId, thinkingText, contentText, tipsText || null);
         state.chatHistory.push({ role: 'assistant', content: contentText });
     }
 }

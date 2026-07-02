@@ -18,6 +18,32 @@ from backend.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _parse_json_lenient(raw: str) -> dict:
+    """宽松解析 JSON，处理 LLM 常见的格式问题"""
+    # 先尝试标准解析
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # 尝试修复常见问题
+    fixed = raw
+
+    # 1. 移除尾部逗号（如 {"a": 1,}）
+    import re
+    fixed = re.sub(r',\s*}', '}', fixed)
+    fixed = re.sub(r',\s*]', ']', fixed)
+
+    # 2. 尝试解析修复后的
+    try:
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        pass
+
+    # 3. 如果仍然失败，抛出原始错误
+    return json.loads(raw)
+
+
 class _Ns:
     """轻量 namespace 对象，用于构建 tool_calls 兼容结构"""
     __slots__ = ("__dict__",)
@@ -160,6 +186,7 @@ class BaseAgent:
             "model": model,
             "messages": messages,
             "temperature": self.temperature,
+            "stream_options": {"include_usage": True},
         }
         if tools_schemas:
             kwargs["tools"] = tools_schemas
@@ -200,6 +227,7 @@ class BaseAgent:
 
                     # 成功：重置熔断计数 + 截断
                     registry.record_success(tool.name, self.scenario)
+                    print(f"{tool.name}工具调用成功")
 
                     # 强制截断超限输出
                     max_chars = tool.max_results_chars
@@ -232,17 +260,29 @@ class BaseAgent:
             self._guard.exit_tool_execution()
 
     async def _handle_tool_calls(self, tool_calls: list) -> list[dict]:
-        """处理工具调用
+        """处理工具调用（并发执行）
 
         Returns:
-            工具结果消息列表
+            工具结果消息列表（顺序与 tool_calls 一致）
         """
-        results = []
         tools = registry.get_tools_by_scenario(self.scenario)
 
-        for tc in tool_calls:
+        async def _run_one(tc):
             func_name = tc.function.name
-            func_args = json.loads(tc.function.arguments)
+
+            # 解析工具参数（处理 JSON 格式错误）
+            try:
+                func_args = _parse_json_lenient(tc.function.arguments)
+            except json.JSONDecodeError as e:
+                logger.warning("工具 %s 参数 JSON 解析失败: %s, 原始参数: %s", func_name, e, tc.function.arguments[:200])
+                return {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps(
+                        {"error": f"工具参数格式错误: {str(e)}", "raw_arguments": tc.function.arguments[:500]},
+                        ensure_ascii=False,
+                    ),
+                }
 
             tool = tools.get(func_name)
             if not tool:
@@ -253,13 +293,15 @@ class BaseAgent:
             else:
                 result_content = await self._execute_tool(tool, func_args)
 
-            results.append({
+            return {
                 "role": "tool",
                 "tool_call_id": tc.id,
                 "content": result_content,
-            })
+            }
 
-        return results
+        # 并发执行所有工具调用，保持顺序
+        results = await asyncio.gather(*[_run_one(tc) for tc in tool_calls])
+        return list(results)
 
     async def run(self, user_message: str) -> dict:
         """执行对话（非流式）
@@ -373,9 +415,19 @@ class BaseAgent:
 
             try:
                 async for chunk in self._call_llm_stream(messages):
+                    # 累计 usage（最后一个 chunk 包含 usage 统计）
+                    if hasattr(chunk, "usage") and chunk.usage:
+                        self.state.usage["total_tokens"] = (
+                            self.state.usage.get("total_tokens", 0) + chunk.usage.total_tokens
+                        )
+
                     delta = chunk.choices[0].delta if chunk.choices else None
                     if not delta:
                         continue
+
+                    # 处理思考过程（DeepSeek reasoning_content）
+                    if hasattr(delta, "reasoning_content") and delta.reasoning_content:
+                        yield {"type": "thinking", "data": delta.reasoning_content}
 
                     # 处理内容
                     if delta.content:
