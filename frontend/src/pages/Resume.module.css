@@ -336,6 +336,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* 编辑容器 */
+.editContainer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.editContainer .resumePreview {
+  flex: 1;
+  outline: none;
+  cursor: text;
+  min-height: 400px;
+}
+
+.editContainer .resumePreview:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
 /* 简历头部 */
 .resumeHeader {
   text-align: center;

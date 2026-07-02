@@ -26,6 +26,7 @@ export default function Resume() {
   const { send, streaming } = useSSE()
   const messagesEnd = useRef(null)
   const splitterRef = useRef(null)
+  const editAreaRef = useRef(null)
 
   const [messages, setMessages] = useState([])
   const [sessionId, setSessionId] = useState(null)
@@ -256,6 +257,13 @@ export default function Resume() {
       showToast('暂无简历数据', 'error')
       return
     }
+
+    // 如果在编辑模式，提示用户通过对话修改
+    if (activeTab === 'edit') {
+      showToast('请通过左侧对话修改简历内容', 'error')
+      return
+    }
+
     try {
       await apiFetch('/resume', {
         method: 'PUT',
@@ -468,16 +476,23 @@ export default function Resume() {
 
             {/* 编辑 Tab */}
             {activeTab === 'edit' && (
-              <div className={styles.resumePreview} contentEditable suppressContentEditableWarning>
-                {resumeData ? <ResumePreview data={resumeData} /> : (
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>
-                      <FileText size={24} />
+              <div className={styles.editContainer}>
+                <div
+                  ref={editAreaRef}
+                  className={styles.resumePreview}
+                  contentEditable
+                  suppressContentEditableWarning
+                >
+                  {resumeData ? <ResumePreview data={resumeData} /> : (
+                    <div className={styles.emptyState}>
+                      <div className={styles.emptyIcon}>
+                        <FileText size={24} />
+                      </div>
+                      <div className={styles.emptyTitle}>暂无简历数据</div>
+                      <div className={styles.emptyDesc}>请先通过对话生成简历</div>
                     </div>
-                    <div className={styles.emptyTitle}>暂无简历数据</div>
-                    <div className={styles.emptyDesc}>请先通过对话生成简历</div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
 
@@ -550,8 +565,8 @@ export default function Resume() {
             )}
           </div>
 
-          {/* 底部操作栏 */}
-          {activeTab === 'preview' && (
+          {/* 底部操作栏 - 仅在编辑模式显示 */}
+          {activeTab === 'edit' && (
             <div className={styles.previewFooter}>
               <div className={styles.footerLeft}>
                 <div className={styles.statusDot} />
