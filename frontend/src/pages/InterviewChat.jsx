@@ -17,7 +17,7 @@ function formatTime(seconds) {
 export default function InterviewChat() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { send, streaming } = useSSE()
+  const { send, abort, streaming } = useSSE()
   const messagesEnd = useRef(null)
 
   const [messages, setMessages] = useState([])
@@ -193,7 +193,9 @@ export default function InterviewChat() {
       {/* 底部输入区 */}
       <ChatInput
         onSend={handleSend}
-        disabled={streaming || interviewEnded}
+        onStop={abort}
+        streaming={streaming}
+        disabled={interviewEnded}
         placeholder={interviewEnded ? '面试已结束' : '输入你的回答...'}
       />
 

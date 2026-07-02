@@ -95,3 +95,29 @@
   cursor: not-allowed;
   transform: none;
 }
+
+.stopBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--error);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.stopBtn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}

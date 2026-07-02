@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic } from 'lucide-react'
+import { Send, Paperclip, Mic, Square } from 'lucide-react'
 import styles from './ChatInput.module.css'
 
 export default function ChatInput({
   onSend,
+  onStop,
+  streaming = false,
   disabled,
   placeholder = '输入消息...',
   showActions = false,
@@ -21,7 +23,7 @@ export default function ChatInput({
 
   const handleSend = () => {
     const trimmed = text.trim()
-    if (!trimmed || disabled) return
+    if (!trimmed || streaming) return
     onSend(trimmed)
     setText('')
   }
@@ -61,17 +63,27 @@ export default function ChatInput({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
+          placeholder={streaming ? 'AI 正在回复...' : placeholder}
+          disabled={disabled || streaming}
           rows={1}
         />
-        <button
-          className={styles.send}
-          onClick={handleSend}
-          disabled={disabled || !text.trim()}
-        >
-          <Send size={18} />
-        </button>
+        {streaming ? (
+          <button
+            className={styles.stopBtn}
+            onClick={onStop}
+            title="停止输出"
+          >
+            <Square size={16} />
+          </button>
+        ) : (
+          <button
+            className={styles.send}
+            onClick={handleSend}
+            disabled={disabled || !text.trim()}
+          >
+            <Send size={18} />
+          </button>
+        )}
       </div>
     </div>
   )

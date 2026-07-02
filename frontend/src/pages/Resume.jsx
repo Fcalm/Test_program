@@ -599,7 +599,9 @@ export default function Resume() {
           {/* 输入区 */}
           <ChatInput
             onSend={handleSend}
-            disabled={streaming}
+            onStop={abort}
+            streaming={streaming}
+            disabled={false}
             placeholder="输入您的问题..."
             showActions
             onUpload={() => document.getElementById('file-upload').click()}
