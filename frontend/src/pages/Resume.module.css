@@ -1,0 +1,614 @@
+/* ===== 整体布局 ===== */
+.container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--white);
+}
+
+/* ===== 左侧聊天区 ===== */
+.chatSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--border);
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  flex-shrink: 0;
+}
+
+.chatLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+}
+
+.chatTitleArea {
+  flex: 1;
+}
+
+.chatTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.chatSessionId {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.chatActions {
+  display: flex;
+  gap: 8px;
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.iconBtn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* ===== 消息列表 ===== */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== 欢迎页 ===== */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.welcomeIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.welcome h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.welcome p {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  margin-bottom: 32px;
+  max-width: 400px;
+}
+
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.quickBtn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.quickBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+/* ===== 面板（会话/历史） ===== */
+.panel {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelHeader button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-family: inherit;
+}
+
+.panelHeader button:hover {
+  color: var(--text-primary);
+}
+
+.panelEmpty {
+  padding: 24px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.sessionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sessionItem:hover {
+  background: var(--bg-secondary);
+}
+
+.sessionItem.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.sessionItem span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionItem button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.sessionItem button:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+/* ===== 分隔线（可拖拽） ===== */
+.splitter {
+  width: 4px;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.splitter:hover,
+.splitter.active {
+  background: var(--text-muted);
+}
+
+/* ===== 右侧预览区 ===== */
+.previewSection {
+  width: 40%;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+}
+
+.previewHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.previewHeaderLeft h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.previewActions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ===== Tab 导航 ===== */
+.tabs {
+  display: flex;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+}
+
+.tab {
+  padding: 12px 16px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tab.active {
+  color: var(--text-primary);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--text-primary);
+}
+
+/* ===== 简历内容区 ===== */
+.previewContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.resumePreview {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 简历头部 */
+.resumeHeader {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.resumeName {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.resumeContact {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* 简历模块 */
+.resumeSection {
+  margin-bottom: 24px;
+}
+
+.resumeSectionTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 经历条目 */
+.resumeItem {
+  margin-bottom: 16px;
+}
+
+.resumeItem:last-child {
+  margin-bottom: 0;
+}
+
+.resumeItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.resumeItemTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resumeItemDate {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.resumeItemSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.resumeItemDesc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.resumeItemDesc ul {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.resumeItemDesc li {
+  margin-bottom: 4px;
+}
+
+.resumeItemDesc li::marker {
+  color: var(--text-muted);
+}
+
+/* ===== 底部操作栏 ===== */
+.previewFooter {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--white);
+  flex-shrink: 0;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.statusText {
+  font-size: var(--font-size-xs);
+  color: var(--success);
+}
+
+.footerActions {
+  display: flex;
+  gap: 12px;
+}
+
+.exportBtn,
+.saveBtn {
+  padding: 8px 24px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.exportBtn {
+  background: var(--white);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.exportBtn:hover {
+  border-color: var(--text-muted);
+}
+
+.saveBtn {
+  background: var(--text-primary);
+  color: var(--white);
+  border: none;
+}
+
+.saveBtn:hover {
+  background: var(--text-secondary);
+}
+
+/* ===== 历史/会话列表 ===== */
+.historyList,
+.sessionsList {
+  padding: 12px 0;
+}
+
+.historyItem,
+.sessionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.historyItem:hover,
+.sessionItem:hover {
+  background: var(--bg-secondary);
+}
+
+.historyInfo,
+.sessionInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.historyName,
+.sessionTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.historyDate,
+.sessionMeta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.historyActions,
+.sessionActions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 1024px) {
+  .container {
+    position: relative;
+  }
+
+  .previewSection {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 400px;
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .previewSection.open {
+    transform: translateX(0);
+  }
+
+  .splitter {
+    display: none;
+  }
+
+  .mobileToggle {
+    display: flex;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobileToggle {
+    display: none;
+  }
+}
+
+/* ===== 空态 ===== */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+}
+
+.emptyTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.emptyDesc {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}

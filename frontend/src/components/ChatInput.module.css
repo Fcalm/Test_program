@@ -1,0 +1,97 @@
+.wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 24px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+
+.actionBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+  background: var(--bg-secondary);
+  min-height: 48px;
+  max-height: 120px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  border-color: var(--text-muted);
+  background: var(--white);
+}
+
+.input:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.send {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--text-primary);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.send:hover:not(:disabled) {
+  background: var(--text-secondary);
+  transform: scale(1.05);
+}
+
+.send:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+  transform: none;
+}
