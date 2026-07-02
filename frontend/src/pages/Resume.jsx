@@ -49,7 +49,7 @@ export default function Resume() {
 
   // 保存弹窗状态
   const [showSaveModal, setShowSaveModal] = useState(false)
-  const [saveHistoryName, setSaveHistoryName] = useState('')
+  const [newHistoryName, setNewHistoryName] = useState('')
   const [pendingSaveData, setPendingSaveData] = useState(null)
 
   // 历史标题编辑状态
@@ -310,8 +310,8 @@ export default function Resume() {
     setEditingHistoryName(item.name || formatHistoryTime(item.created_at))
   }
 
-  // 保存历史版本名称
-  const saveHistoryName = async (historyId) => {
+  // 更新历史版本名称
+  const updateHistoryName = async (historyId) => {
     try {
       await apiFetch(`/resume/history/${historyId}/name`, {
         method: 'PUT',
@@ -387,7 +387,7 @@ export default function Resume() {
     // 生成默认名称：YYYY年MM月DD日 HH:MM
     const now = new Date()
     const defaultName = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-    setSaveHistoryName(defaultName)
+    setNewHistoryName(defaultName)
     setPendingSaveData(resumeData)
     setShowSaveModal(true)
   }
@@ -401,7 +401,7 @@ export default function Resume() {
         method: 'PUT',
         body: JSON.stringify({
           ...pendingSaveData,
-          history_name: saveHistoryName,
+          history_name: newHistoryName,
         }),
       })
       showToast('保存成功')
@@ -417,32 +417,16 @@ export default function Resume() {
     }
   }
 
-  // 编辑模式：保存编辑数据
-  const handleEditSave = async () => {
+  // 编辑模式：打开保存弹窗
+  const handleEditSave = () => {
     if (!editData) return
 
     // 生成默认名称
     const now = new Date()
     const defaultName = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-    setSaveHistoryName(defaultName)
+    setNewHistoryName(defaultName)
     setPendingSaveData(editData)
     setShowSaveModal(true)
-  }
-
-  // 编辑模式：保存编辑数据
-  const handleEditSave = async () => {
-    if (!editData) return
-
-    try {
-      await apiFetch('/resume', {
-        method: 'PUT',
-        body: JSON.stringify(editData),
-      })
-      setResumeData(editData)
-      showToast('保存成功')
-    } catch (err) {
-      showToast(err.message, 'error')
-    }
   }
 
   // 编辑模式：内联编辑 - 同步 contentEditable 的文本回 editData
@@ -753,9 +737,9 @@ export default function Resume() {
                             className={styles.historyNameInput}
                             value={editingHistoryName}
                             onChange={(e) => setEditingHistoryName(e.target.value)}
-                            onBlur={() => saveHistoryName(h.id)}
+                            onBlur={() => updateHistoryName(h.id)}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') saveHistoryName(h.id)
+                              if (e.key === 'Enter') updateHistoryName(h.id)
                               if (e.key === 'Escape') cancelEditHistoryName()
                             }}
                             onClick={(e) => e.stopPropagation()}
@@ -906,8 +890,8 @@ export default function Resume() {
               <label className={styles.modalLabel}>版本名称</label>
               <input
                 className={styles.modalInput}
-                value={saveHistoryName}
-                onChange={(e) => setSaveHistoryName(e.target.value)}
+                value={newHistoryName}
+                onChange={(e) => setNewHistoryName(e.target.value)}
                 placeholder="输入版本名称"
                 autoFocus
               />
