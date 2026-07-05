@@ -7,14 +7,16 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from agent.core.baseagent import BaseAgent, SCENARIO_CONFIGS
+from agent.core.baseagent import BaseAgent
 from agent.core.state import AgentState
+from backend.provider_config import ResolvedConfig
 
 
 async def chat_with_agent(
     message: str,
     state: AgentState,
     db: AsyncSession | None = None,
+    resolved_config: ResolvedConfig | None = None,
 ) -> dict:
     """
     与 Agent 对话（非流式）
@@ -23,15 +25,17 @@ async def chat_with_agent(
         message: 用户消息
         state: 当前对话状态（已从 DB 加载或新建）
         db: 数据库会话（用于工具调用）
+        resolved_config: 解析后的配置（可选）
 
     Returns:
-        {"response": str, "thinking": str, "stage": str}
+        {"response": str, "thinking": str}
     """
     agent = BaseAgent(
         scenario=state.scenario,
         user_id=state.user_id,
         session_id=state.session_id,
         db=db,
+        resolved_config=resolved_config,
     )
     # 恢复已有状态（包含历史消息、工具结果等）
     agent.state = state
@@ -43,6 +47,7 @@ async def chat_with_agent_stream(
     message: str,
     state: AgentState,
     db: AsyncSession | None = None,
+    resolved_config: ResolvedConfig | None = None,
 ) -> AsyncGenerator[dict, None]:
     """
     与 Agent 对话（流式输出）
@@ -51,6 +56,7 @@ async def chat_with_agent_stream(
         message: 用户消息
         state: 当前对话状态（已从 DB 加载或新建）
         db: 数据库会话（用于工具调用）
+        resolved_config: 解析后的配置（可选）
 
     Yields:
         {"type": "thinking"|"content"|"tool_call"|"done", "data": ...}
@@ -60,6 +66,7 @@ async def chat_with_agent_stream(
         user_id=state.user_id,
         session_id=state.session_id,
         db=db,
+        resolved_config=resolved_config,
     )
     # 恢复已有状态
     agent.state = state

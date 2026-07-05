@@ -1,0 +1,65 @@
+# config.yaml - LLM 服务商模板 & 全局默认配置
+# API Key 不存储在此文件中，由用户在前端配置后存入数据库
+
+providers:
+  deepseek:
+    name: "DeepSeek"
+    base_url: "https://api.deepseek.com"
+    models:
+      - id: "deepseek-v4-flash"
+        context_limit: 128000
+        description: "快速模型，适合日常对话"
+      - id: "deepseek-v4-pro"
+        context_limit: 200000
+        description: "专业模型，复杂推理"
+    default_model: "deepseek-v4-flash"
+    requires_api_key: true
+
+  mimo:
+    name: "MiMo (小米)"
+    base_url: "https://api.xiaomi.com/v1"
+    models:
+      - id: "mimo-7b"
+        context_limit: 32000
+        description: "小米轻量模型"
+      - id: "mimo-70b"
+        context_limit: 128000
+        description: "小米旗舰模型"
+    default_model: "mimo-7b"
+    requires_api_key: true
+
+  local:
+    name: "本地模型 (Ollama)"
+    base_url: "http://localhost:11434/v1"
+    models:
+      - id: "qwen2.5:7b"
+        context_limit: 32000
+        description: "通义千问 7B"
+      - id: "llama3.1:8b"
+        context_limit: 128000
+        description: "Llama 3.1 8B"
+      - id: "deepseek-r1:7b"
+        context_limit: 32000
+        description: "DeepSeek R1 蒸馏版"
+    default_model: "qwen2.5:7b"
+    requires_api_key: false
+
+defaults:
+  provider: "deepseek"
+  model: "deepseek-v4-flash"
+  higher_model: "deepseek-v4-pro"
+  max_tokens: null
+
+  scenario_configs:
+    resume:
+      max_rounds: 10
+      temperature: 0.4
+    interview:
+      max_rounds: 5
+      temperature: 0.7
+    job_find:
+      max_rounds: 8
+      temperature: 0.5
+    analysis:
+      max_rounds: 5
+      temperature: 0.3

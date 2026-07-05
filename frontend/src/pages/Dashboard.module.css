@@ -1,0 +1,321 @@
+.main {
+  padding: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 个人信息 */
+.profile {
+  margin-bottom: 64px;
+  animation: fadeIn 0.6s ease;
+}
+
+.profileContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+}
+
+.greeting {
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+
+.name {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.title {
+  font-size: 16px;
+  color: var(--gray-500);
+  margin-bottom: 24px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-self: flex-start;
+}
+
+.btnPrimary,
+.btnSecondary {
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnPrimary {
+  background: var(--gray-900);
+  color: var(--white);
+  border: none;
+}
+
+.btnPrimary:hover {
+  background: var(--gray-800);
+}
+
+.btnSecondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+}
+
+.btnSecondary:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-900);
+}
+
+/* 功能卡片 */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  animation: fadeIn 0.6s ease 0.2s both;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--gray-400);
+  transform: translateY(-2px);
+}
+
+.cardIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.cardDesc {
+  font-size: 14px;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  flex: 1;
+}
+
+.cardBtn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-700);
+  background: var(--white);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cardBtn:hover {
+  border-color: var(--gray-900);
+  color: var(--gray-900);
+}
+
+/* 配置弹窗 */
+.configSection {
+  margin-bottom: 24px;
+}
+
+.configSection:last-child {
+  margin-bottom: 0;
+}
+
+.configTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.configRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.configRow label {
+  flex: 0 0 120px;
+  font-size: 13px;
+  color: var(--gray-700);
+  text-align: right;
+}
+
+.configRow input,
+.configRow select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--gray-900);
+  background: var(--white);
+  outline: none;
+  font-family: inherit;
+}
+
+.configRow input:focus,
+.configRow select:focus {
+  border-color: var(--primary);
+}
+
+.configRow input[type="number"] {
+  width: 80px;
+  flex: 0 0 80px;
+}
+
+.scenarioTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.scenarioTable th {
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--gray-500);
+  font-weight: 500;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.scenarioTable td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.scenarioTable td input {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+  font-family: inherit;
+}
+
+.scenarioTable td input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.scenarioTable tr:last-child td {
+  border-bottom: none;
+}
+
+/* API Key 输入框 */
+.apiKeyInput {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.apiKeyInput input {
+  flex: 1;
+}
+
+.toggleBtn {
+  padding: 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--white);
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: all 0.2s ease;
+}
+
+.toggleBtn:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-700);
+}
+
+.helpText {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 4px;
+  margin-left: 132px;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 24px;
+  }
+
+  .profileContent {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+}

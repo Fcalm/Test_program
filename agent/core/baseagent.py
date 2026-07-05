@@ -8,18 +8,21 @@ import logging
 from typing import AsyncGenerator
 
 from agent.core.state import AgentState
-from agent.core.client import create_client, get_model
+from agent.core.client import create_client, create_client_for_config, get_model
 from agent.prompts.build_prompt import build_static_prompt, build_system_prompt
 from agent.tools.registry import registry
 from agent.hooks.compact_hook import CompactHook, should_update_summary, update_summary
 from agent.hooks.compress_guard import CompressGuard
 from backend.config import settings
+from backend.provider_config import ResolvedConfig
 
 logger = logging.getLogger(__name__)
 
 
 def _parse_json_lenient(raw: str) -> dict:
     """宽松解析 JSON，处理 LLM 常见的格式问题"""
+    import re
+
     # 先尝试标准解析
     try:
         return json.loads(raw)
@@ -30,17 +33,30 @@ def _parse_json_lenient(raw: str) -> dict:
     fixed = raw
 
     # 1. 移除尾部逗号（如 {"a": 1,}）
-    import re
     fixed = re.sub(r',\s*}', '}', fixed)
     fixed = re.sub(r',\s*]', ']', fixed)
 
-    # 2. 尝试解析修复后的
+    # 2. 修复缺少逗号的问题（如 "a": 1 "b": 2 -> "a": 1, "b": 2）
+    fixed = re.sub(r'"\s*\n\s*"', '",\n"', fixed)
+    fixed = re.sub(r'(\d+)\s*\n\s*"', r'\1,\n"', fixed)
+    fixed = re.sub(r'}\s*\n\s*"', '},\n"', fixed)
+    fixed = re.sub(r']\s*\n\s*"', '],\n"', fixed)
+
+    # 3. 尝试解析修复后的
     try:
         return json.loads(fixed)
     except json.JSONDecodeError:
         pass
 
-    # 3. 如果仍然失败，抛出原始错误
+    # 4. 如果仍然失败，尝试截取到最后一个完整的 } 或 ]
+    for i in range(len(raw) - 1, 0, -1):
+        if raw[i] in ('}', ']'):
+            try:
+                return json.loads(raw[:i + 1])
+            except json.JSONDecodeError:
+                continue
+
+    # 5. 最后尝试
     return json.loads(raw)
 
 
@@ -78,34 +94,54 @@ class BaseAgent:
         user_id: int | None = None,
         session_id: str = "",
         db=None,
+        resolved_config: ResolvedConfig | None = None,
     ):
         self.scenario = scenario
         self.user_id = user_id
         self.session_id = session_id
         self.db = db
+        self.resolved_config = resolved_config
         self.state = AgentState(
             scenario=scenario,
             user_id=user_id,
             session_id=session_id,
         )
         self._guard = CompressGuard()
-        self._compact_hook = CompactHook(model=get_model(), guard=self._guard)
+        self._compact_hook = CompactHook(
+            model=self.model,
+            context_limit=self.context_limit,
+            guard=self._guard
+        )
 
         # 进入 loop 前构建静态 prompt（会话内不变）
-        self._static_prompt = build_static_prompt(scenario)
+        self._static_prompt = build_static_prompt(scenario, user_id)
 
     @property
     def config(self) -> dict:
+        if self.resolved_config:
+            return self.resolved_config.scenario_configs.get(self.scenario, {})
         configs = settings.SCENARIO_CONFIGS
         return configs.get(self.scenario, configs["resume"])
 
     @property
     def max_rounds(self) -> int:
-        return self.config["max_rounds"]
+        return self.config.get("max_rounds", 10)
 
     @property
     def temperature(self) -> float:
-        return self.config["temperature"]
+        return self.config.get("temperature", 0.5)
+
+    @property
+    def model(self) -> str:
+        if self.resolved_config:
+            return self.resolved_config.model
+        return get_model()
+
+    @property
+    def context_limit(self) -> int:
+        if self.resolved_config:
+            return self.resolved_config.context_limit
+        return 128000
 
     def _build_messages(self, user_message: str) -> list[dict]:
         """构建完整的消息列表
@@ -119,13 +155,12 @@ class BaseAgent:
         # 1. 构建 system prompt（静态层 + 动态层）
         dynamic_context = {
             "work": self.scenario,
-            "tool_results": self.state.tool_results,
-            "stage": self.state.stage,
+            "key_data": self.state.key_data,
         }
         system_prompt = build_system_prompt(self._static_prompt, dynamic_context)
 
         # 2. 若存在完整压缩摘要，合并到 system prompt 末尾
-        compact_summary = self.state.tool_results.get("_compact_summary")
+        compact_summary = self.state.key_data.get("_compact_summary")
         if compact_summary:
             system_prompt = f"{system_prompt}\n\n---\n\n[对话摘要]\n{compact_summary}"
 
@@ -133,15 +168,18 @@ class BaseAgent:
         if self.state.summary:
             system_prompt = f"{system_prompt}\n\n---\n\n[工作笔记]\n{self.state.summary}"
 
-        # 4. 组装消息
+        # 4. 注入用户和会话信息
+        system_prompt = f"{system_prompt}\n\n---\n\n[系统信息]\nuser_id: {self.user_id}\nsession_id: {self.session_id}"
+
+        # 5. 组装消息
         messages = [{"role": "system", "content": system_prompt}]
 
-        # 5. 添加历史消息（排除 system）
+        # 6. 添加历史消息（排除 system）
         for msg in self.state.messages:
             if msg.get("role") != "system":
                 messages.append(msg)
 
-        # 6. 添加当前用户消息
+        # 7. 添加当前用户消息
         messages.append({"role": "user", "content": user_message})
 
         return messages
@@ -152,8 +190,11 @@ class BaseAgent:
         Returns:
             LLM 响应字典
         """
-        client = create_client()
-        model = get_model()
+        if self.resolved_config:
+            client = create_client_for_config(self.resolved_config)
+        else:
+            client = create_client()
+        model = self.model
 
         # 获取工具 schemas
         tools_schemas = registry.get_schemas_by_scenario(self.scenario)
@@ -176,8 +217,11 @@ class BaseAgent:
         Yields:
             LLM 响应 chunks
         """
-        client = create_client()
-        model = get_model()
+        if self.resolved_config:
+            client = create_client_for_config(self.resolved_config)
+        else:
+            client = create_client()
+        model = self.model
 
         # 获取工具 schemas
         tools_schemas = registry.get_schemas_by_scenario(self.scenario)
@@ -310,7 +354,7 @@ class BaseAgent:
             user_message: 用户消息
 
         Returns:
-            {"response": str, "thinking": str, "stage": str}
+            {"response": str, "thinking": str}
         """
         # 添加用户消息到状态
         self.state.add_message("user", user_message)
@@ -324,7 +368,6 @@ class BaseAgent:
 
         # 循环处理（最多 max_rounds 轮工具调用）
         thinking = ""
-        model = get_model()
         for _ in range(self.max_rounds):
             choice = await self._call_llm(messages)
 
@@ -366,7 +409,6 @@ class BaseAgent:
                 return {
                     "response": content,
                     "thinking": thinking,
-                    "stage": self.state.stage,
                     "session_id": self.session_id,
                 }
 
@@ -380,8 +422,8 @@ class BaseAgent:
                 thinking += content + "\n"
 
             # 检查是否需要更新滚动摘要（token 驱动）
-            if should_update_summary(self.state, model):
-                await update_summary(self.state, model)
+            if should_update_summary(self.state, self.model, self.context_limit):
+                await update_summary(self.state, self.model, self.context_limit)
 
             # 重新构建消息（包含工具结果）
             messages = self._build_messages(user_message)
@@ -390,7 +432,6 @@ class BaseAgent:
         return {
             "response": content if content else "处理超时，请重试",
             "thinking": thinking,
-            "stage": self.state.stage,
         }
 
     async def run_stream(self, user_message: str) -> AsyncGenerator[dict, None]:
@@ -410,7 +451,6 @@ class BaseAgent:
         messages = self._build_messages(user_message)
 
         # 循环处理（最多 max_rounds 轮工具调用）
-        model = get_model()
         for _ in range(self.max_rounds):
             full_content = ""
             full_thinking = ""
@@ -498,8 +538,8 @@ class BaseAgent:
                     self.state.messages.append(result)
 
                 # 检查是否需要更新滚动摘要（token 驱动）
-                if should_update_summary(self.state, model):
-                    await update_summary(self.state, model)
+                if should_update_summary(self.state, self.model, self.context_limit):
+                    await update_summary(self.state, self.model, self.context_limit)
 
                 # 重新构建消息
                 messages = self._build_messages(user_message)
@@ -510,6 +550,16 @@ class BaseAgent:
             if full_thinking:
                 msg_data["thinking"] = full_thinking
             self.state.add_message(**msg_data)
+
+            # 检测面试结束标签（支持 <interviewend />、<interviewend/>、<interviewend> 等变体）
+            if self.scenario == "interview" and "<interviewend" in full_content.lower():
+                yield {"type": "interview_end", "data": {"session_id": self.session_id}}
+                return
+
+            # 检测轮次切换标签（支持 <round_end />、<round_end/>、<round_end> 等变体）
+            if self.scenario == "interview" and "<round_end" in full_content.lower():
+                yield {"type": "round_end", "data": {"session_id": self.session_id}}
+
             yield {"type": "done", "data": {"response": full_content, "session_id": self.session_id}}
             return
 
