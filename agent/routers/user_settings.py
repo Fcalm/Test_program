@@ -17,18 +17,18 @@ router = APIRouter(prefix="/agent", tags=["用户配置"])
 
 class UserSettingsResponse(BaseModel):
     provider: str
+    base_url: str | None = None  # 用户自定义 base_url
     api_key_set: bool  # 是否已设置 API Key（不暴露实际值）
     model: str
     higher_model: str
-    scenario_overrides: dict
 
 
 class UserSettingsUpdateRequest(BaseModel):
     provider: str | None = None
+    base_url: str | None = None  # 空字符串表示清除，使用 provider 默认
     api_key: str | None = None  # 空字符串表示清除
     model: str | None = None
     higher_model: str | None = None
-    scenario_overrides: dict | None = None
 
 
 class ProviderInfoResponse(BaseModel):
@@ -58,18 +58,18 @@ async def get_user_settings(
         defaults = yaml_config.get("defaults", {})
         return UserSettingsResponse(
             provider=defaults.get("provider", "deepseek"),
+            base_url=None,
             api_key_set=False,
             model=defaults.get("model", ""),
-            higher_model=defaults.get("higher_model", ""),
-            scenario_overrides={}
+            higher_model=defaults.get("higher_model", "")
         )
 
     return UserSettingsResponse(
         provider=user_settings.provider,
+        base_url=user_settings.base_url,
         api_key_set=bool(user_settings.api_key),
         model=user_settings.model,
-        higher_model=user_settings.higher_model,
-        scenario_overrides=_parse_json(user_settings.scenario_overrides)
+        higher_model=user_settings.higher_model
     )
 
 
@@ -94,6 +94,12 @@ async def update_user_settings(
     if req.provider is not None:
         user_settings.provider = req.provider
 
+    if req.base_url is not None:
+        if req.base_url == "":
+            user_settings.base_url = None
+        else:
+            user_settings.base_url = req.base_url
+
     if req.api_key is not None:
         if req.api_key == "":
             user_settings.api_key = None
@@ -106,18 +112,14 @@ async def update_user_settings(
     if req.higher_model is not None:
         user_settings.higher_model = req.higher_model
 
-    if req.scenario_overrides is not None:
-        import json
-        user_settings.scenario_overrides = json.dumps(req.scenario_overrides, ensure_ascii=False)
-
     await db.flush()
 
     return UserSettingsResponse(
         provider=user_settings.provider,
+        base_url=user_settings.base_url,
         api_key_set=bool(user_settings.api_key),
         model=user_settings.model,
-        higher_model=user_settings.higher_model,
-        scenario_overrides=_parse_json(user_settings.scenario_overrides)
+        higher_model=user_settings.higher_model
     )
 
 
@@ -130,18 +132,9 @@ async def get_providers():
             key=p.key,
             name=p.name,
             base_url=p.base_url,
-            models=[{"id": m.id, "context_limit": m.context_limit, "description": m.description} for m in p.models],
+            models=[{"id": m.id, "context_limit": m.context_limit} for m in p.models],
             default_model=p.default_model,
             requires_api_key=p.requires_api_key
         )
         for p in providers
     ]
-
-
-def _parse_json(json_str: str) -> dict:
-    """解析 JSON 字符串，失败返回空字典"""
-    import json
-    try:
-        return json.loads(json_str) if json_str else {}
-    except (json.JSONDecodeError, TypeError):
-        return {}

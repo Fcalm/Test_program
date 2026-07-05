@@ -18,7 +18,6 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 
 # 前端可配置字段（非敏感）
 EXPOSABLE_FIELDS = {
-    "LLM_MODEL", "LLM_HIGHER_MODEL", "LLM_MAX_TOKENS",
     "DEBUG", "LOG_LEVEL",
 }
 
@@ -30,21 +29,6 @@ class Settings(BaseSettings):
     # === JWT ===
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-
-    # === LLM ===
-    OPENAI_API_KEY: str = ""
-    OPENAI_BASE_URL: str = "https://api.deepseek.com"
-    LLM_MODEL: str = "deepseek-v4-flash"
-    LLM_HIGHER_MODEL: str = "deepseek-v4-pro"
-    LLM_MAX_TOKENS: int | None = None
-
-    # === Agent 场景配置 ===
-    SCENARIO_CONFIGS: dict = {
-        "resume": {"max_rounds": 10, "temperature": 0.4},
-        "interview": {"max_rounds": 5, "temperature": 0.7},
-        "job_find": {"max_rounds": 8, "temperature": 0.5},
-        "analysis": {"max_rounds": 5, "temperature": 0.3},
-    }
 
     # === Redis ===
     REDIS_URL: str = "redis://localhost:6379/0"

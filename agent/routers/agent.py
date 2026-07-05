@@ -295,17 +295,12 @@ class ConfigUpdateRequest(BaseModel):
     llm_max_tokens: int | None = None
     debug: bool | None = None
     log_level: str | None = None
-    scenario_configs: dict | None = None
 
 
 # 配置字段名 → settings 属性名映射
 _CONFIG_FIELD_MAP = {
-    "llm_model": "LLM_MODEL",
-    "llm_higher_model": "LLM_HIGHER_MODEL",
-    "llm_max_tokens": "LLM_MAX_TOKENS",
     "debug": "DEBUG",
     "log_level": "LOG_LEVEL",
-    "scenario_configs": "SCENARIO_CONFIGS",
 }
 
 
@@ -322,7 +317,7 @@ async def get_config():
     return {
         "providers": {p.key: {
             "name": p.name,
-            "models": [{"id": m.id, "context_limit": m.context_limit, "description": m.description} for m in p.models],
+            "models": [{"id": m.id, "context_limit": m.context_limit} for m in p.models],
             "requires_api_key": p.requires_api_key,
         } for p in providers},
         "defaults": {
@@ -330,7 +325,6 @@ async def get_config():
             "model": defaults.get("model", ""),
             "higher_model": defaults.get("higher_model", ""),
             "max_tokens": defaults.get("max_tokens"),
-            "scenario_configs": defaults.get("scenario_configs", {}),
         },
         "debug": settings.DEBUG,
         "log_level": settings.LOG_LEVEL,
@@ -353,8 +347,6 @@ async def update_config(req: ConfigUpdateRequest):
         yaml_updates["higher_model"] = req.llm_higher_model
     if req.llm_max_tokens is not None:
         yaml_updates["max_tokens"] = req.llm_max_tokens
-    if req.scenario_configs is not None:
-        yaml_updates["scenario_configs"] = req.scenario_configs
 
     if yaml_updates:
         update_defaults_in_yaml(yaml_updates)

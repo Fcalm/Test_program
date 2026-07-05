@@ -32,7 +32,6 @@ _YAML_PATH = Path(__file__).parent.parent / "config.yaml"
 class ModelInfo:
     id: str
     context_limit: int = 128_000
-    description: str = ""
 
 
 @dataclass
@@ -55,7 +54,6 @@ class ResolvedConfig:
     higher_model: str
     context_limit: int
     max_tokens: int | None
-    scenario_configs: dict
 
 
 @lru_cache()
@@ -77,8 +75,7 @@ def get_all_providers() -> list[ProviderInfo]:
         models = [
             ModelInfo(
                 id=m["id"],
-                context_limit=m.get("context_limit", 128000),
-                description=m.get("description", "")
+                context_limit=m.get("context_limit", 128000)
             )
             for m in data.get("models", [])
         ]
@@ -125,10 +122,10 @@ async def resolve_config(user_id: int | None, db: AsyncSession | None = None) ->
     model = defaults.get("model", "")
     higher_model = defaults.get("higher_model", "")
     max_tokens = defaults.get("max_tokens")
-    scenario_configs = defaults.get("scenario_configs", {})
 
     # 尝试从用户配置覆盖
     user_api_key = None
+    user_base_url = None
     if user_id and db:
         result = await db.execute(
             select(UserSettings).where(UserSettings.user_id == user_id)
@@ -144,13 +141,8 @@ async def resolve_config(user_id: int | None, db: AsyncSession | None = None) ->
                 higher_model = user_settings.higher_model
             if user_settings.api_key:
                 user_api_key = decrypt_api_key(user_settings.api_key)
-            if user_settings.scenario_overrides:
-                try:
-                    overrides = json.loads(user_settings.scenario_overrides)
-                    if overrides:
-                        scenario_configs = {**scenario_configs, **overrides}
-                except json.JSONDecodeError:
-                    pass
+            if user_settings.base_url:
+                user_base_url = user_settings.base_url
 
     # 获取 provider 信息
     provider_data = providers_data.get(provider_key, {})
@@ -167,7 +159,10 @@ async def resolve_config(user_id: int | None, db: AsyncSession | None = None) ->
     if not model:
         model = provider.default_model
 
-    # 确定 API Key（优先级：用户配置 > 环境变量 > 空）
+    # 确定 base_url（优先级：用户配置 > provider 默认）
+    base_url = user_base_url or provider.base_url
+
+    # 确定 API Key（优先级：用户配置 > 空）
     api_key = user_api_key or ""
 
     # 计算 context_limit
@@ -175,13 +170,12 @@ async def resolve_config(user_id: int | None, db: AsyncSession | None = None) ->
 
     return ResolvedConfig(
         provider=provider_key,
-        base_url=provider.base_url,
+        base_url=base_url,
         api_key=api_key,
         model=model,
         higher_model=higher_model,
         context_limit=context_limit,
-        max_tokens=max_tokens,
-        scenario_configs=scenario_configs
+        max_tokens=max_tokens
     )
 
 

@@ -117,19 +117,26 @@ class BaseAgent:
         self._static_prompt = build_static_prompt(scenario, user_id)
 
     @property
-    def config(self) -> dict:
-        if self.resolved_config:
-            return self.resolved_config.scenario_configs.get(self.scenario, {})
-        configs = settings.SCENARIO_CONFIGS
-        return configs.get(self.scenario, configs["resume"])
-
-    @property
     def max_rounds(self) -> int:
-        return self.config.get("max_rounds", 10)
+        # 硬编码场景配置
+        scenario_configs = {
+            "resume": {"max_rounds": 10, "temperature": 0.4},
+            "interview": {"max_rounds": 5, "temperature": 0.7},
+            "job_find": {"max_rounds": 8, "temperature": 0.5},
+            "analysis": {"max_rounds": 5, "temperature": 0.3},
+        }
+        return scenario_configs.get(self.scenario, {}).get("max_rounds", 10)
 
     @property
     def temperature(self) -> float:
-        return self.config.get("temperature", 0.5)
+        # 硬编码场景配置
+        scenario_configs = {
+            "resume": {"max_rounds": 10, "temperature": 0.4},
+            "interview": {"max_rounds": 5, "temperature": 0.7},
+            "job_find": {"max_rounds": 8, "temperature": 0.5},
+            "analysis": {"max_rounds": 5, "temperature": 0.3},
+        }
+        return scenario_configs.get(self.scenario, {}).get("temperature", 0.5)
 
     @property
     def model(self) -> str:

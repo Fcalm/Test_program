@@ -38,13 +38,6 @@ const features = [
   },
 ]
 
-const scenarios = [
-  { key: 'resume', label: '简历助手' },
-  { key: 'interview', label: '面试模拟' },
-  { key: 'job_find', label: '求职顾问' },
-  { key: 'analysis', label: '数据分析' },
-]
-
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -54,6 +47,7 @@ export default function Dashboard() {
   const [userSettings, setUserSettings] = useState(null)
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState('')
+  const [baseUrlInput, setBaseUrlInput] = useState('')
 
   const loadConfig = async () => {
     try {
@@ -65,6 +59,7 @@ export default function Dashboard() {
       setProviders(configData.providers || {})
       setUserSettings(userSettingsData)
       setApiKeyInput('') // 清空 API Key 输入
+      setBaseUrlInput(userSettingsData.base_url || '') // 初始化 base_url
     } catch {
       showToast('配置加载失败', 'error')
     }
@@ -82,12 +77,16 @@ export default function Dashboard() {
         provider: userSettings.provider,
         model: userSettings.model,
         higher_model: userSettings.higher_model,
-        scenario_overrides: userSettings.scenario_overrides,
       }
 
       // 只有当用户输入了新的 API Key 时才更新
       if (apiKeyInput) {
         userSettingsBody.api_key = apiKeyInput
+      }
+
+      // 只有当用户修改了 base_url 时才更新
+      if (baseUrlInput !== (userSettings.base_url || '')) {
+        userSettingsBody.base_url = baseUrlInput || ''
       }
 
       await apiPut('/agent/user-settings', userSettingsBody)
@@ -96,7 +95,6 @@ export default function Dashboard() {
       const systemConfigBody = {
         llm_model: config.defaults?.model || undefined,
         llm_higher_model: config.defaults?.higher_model || undefined,
-        scenario_configs: config.defaults?.scenario_configs,
         log_level: config.log_level,
         debug: config.debug,
       }
@@ -109,19 +107,6 @@ export default function Dashboard() {
     }
   }
 
-  const updateScenario = (key, field, value) => {
-    setConfig((prev) => ({
-      ...prev,
-      defaults: {
-        ...prev.defaults,
-        scenario_configs: {
-          ...prev.defaults?.scenario_configs,
-          [key]: { ...prev.defaults?.scenario_configs?.[key], [field]: value },
-        },
-      },
-    }))
-  }
-
   const handleProviderChange = (providerKey) => {
     const provider = providers[providerKey]
     const defaultModel = provider?.models?.[0]?.id || ''
@@ -131,7 +116,9 @@ export default function Dashboard() {
       provider: providerKey,
       model: defaultModel,
       higher_model: '',
+      base_url: null, // 切换服务商时清空自定义 base_url
     }))
+    setBaseUrlInput('') // 清空 base_url 输入
   }
 
   const handleModelChange = (modelId) => {
@@ -218,6 +205,17 @@ export default function Dashboard() {
                 </select>
               </div>
 
+              <div className={styles.configRow}>
+                <label>Base URL</label>
+                <input
+                  type="text"
+                  value={baseUrlInput}
+                  onChange={(e) => setBaseUrlInput(e.target.value)}
+                  placeholder={currentProvider?.base_url || 'https://api.example.com/v1'}
+                />
+              </div>
+              <p className={styles.helpText}>留空使用服务商默认地址</p>
+
               {currentProvider?.requires_api_key && (
                 <div className={styles.configRow}>
                   <label>API Key</label>
@@ -236,7 +234,6 @@ export default function Dashboard() {
                       {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  <p className={styles.helpText}>留空使用系统默认配置</p>
                 </div>
               )}
 
@@ -248,7 +245,7 @@ export default function Dashboard() {
                 >
                   {currentModels.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.id} - {model.description}
+                      {model.id}
                     </option>
                   ))}
                 </select>
@@ -263,50 +260,11 @@ export default function Dashboard() {
                   <option value="">不使用</option>
                   {currentModels.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.id} - {model.description}
+                      {model.id}
                     </option>
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className={styles.configSection}>
-              <div className={styles.configTitle}>场景配置</div>
-              <table className={styles.scenarioTable}>
-                <thead>
-                  <tr>
-                    <th>场景</th>
-                    <th>最大轮次</th>
-                    <th>Temperature</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scenarios.map(({ key, label }) => (
-                    <tr key={key}>
-                      <td>{label}</td>
-                      <td>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={config.defaults?.scenario_configs?.[key]?.max_rounds || 10}
-                          onChange={(e) => updateScenario(key, 'max_rounds', parseInt(e.target.value) || 10)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          max="2"
-                          step="0.1"
-                          value={config.defaults?.scenario_configs?.[key]?.temperature || 0.5}
-                          onChange={(e) => updateScenario(key, 'temperature', parseFloat(e.target.value) || 0.5)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
 
             <div className={styles.configSection}>

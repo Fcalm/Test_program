@@ -17,6 +17,9 @@ class UserSettings(Base):
     # LLM 提供商选择（对应 config.yaml 中的 provider key）
     provider: Mapped[str] = mapped_column(String(50), default="deepseek")
 
+    # 用户自定义 base_url（可选，覆盖 provider 默认）
+    base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # 用户自己的 API Key（加密存储）
     api_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
@@ -25,11 +28,6 @@ class UserSettings(Base):
 
     # 高级模型 ID
     higher_model: Mapped[str] = mapped_column(String(100), default="")
-
-    # 场景配置覆盖（JSON 字符串）
-    scenario_overrides: Mapped[str] = mapped_column(
-        String(2000), default="{}"
-    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
