@@ -29,6 +29,11 @@ class UserSettings(Base):
     # 高级模型 ID
     higher_model: Mapped[str] = mapped_column(String(100), default="")
 
+    # 场景配置覆盖（JSON 字符串）- 保留字段以兼容现有数据库
+    scenario_overrides: Mapped[str] = mapped_column(
+        String(2000), default="{}"
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
