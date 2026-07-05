@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = str(_ENV_PATH)
         env_file_encoding = "utf-8"
+        extra = "ignore"  # 忽略 .env 中的额外字段（如已废弃的 LLM 配置）
 
 
 def _env_value(value) -> str:
