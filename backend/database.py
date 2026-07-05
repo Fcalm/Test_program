@@ -181,6 +181,7 @@ async def _run_post_migrations(conn):
         "ALTER TABLE agent_sessions ADD COLUMN title VARCHAR(200) DEFAULT ''",
         "ALTER TABLE analysis_reports ADD COLUMN status VARCHAR(20) DEFAULT 'in_progress'",
         "ALTER TABLE analysis_reports ADD COLUMN updated_at DATETIME DEFAULT (datetime('now'))",
+        "ALTER TABLE user_settings ADD COLUMN base_url VARCHAR(500)",
     ]
     for sql in migrations:
         try:
