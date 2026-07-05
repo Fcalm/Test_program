@@ -69,15 +69,6 @@ class _Ns:
             setattr(self, k, v)
 
 
-def get_scenario_configs() -> dict:
-    """获取场景配置（从统一配置读取，支持运行时修改）"""
-    return settings.SCENARIO_CONFIGS
-
-
-# 向后兼容：模块级导出
-SCENARIO_CONFIGS = get_scenario_configs()
-
-
 class BaseAgent:
     """Agent 核心执行引擎
 
