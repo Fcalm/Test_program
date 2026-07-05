@@ -79,7 +79,7 @@ class EditDBTool(BaseTool):
         tables = ", ".join(TABLE_SCHEMAS.keys())
         return (
             f"创建或更新指定表的数据。支持的表：{tables}。"
-            "注意：JSON 字段（如 basic_info, education 等）必须是 JSON 字符串格式。"
+            "JSON 字段（如 basic_info, education, report_data 等）直接传入对象，系统会自动序列化。"
         )
 
     @property
@@ -100,7 +100,7 @@ class EditDBTool(BaseTool):
                 },
                 "data": {
                     "type": "object",
-                    "description": "要更新的数据。JSON 字段需要序列化为字符串。例如：{\"basic_info\": \"{\\\"name\\\": \\\"张三\\\"}\"}",
+                    "description": "要更新的数据。JSON 字段直接传对象，如：{\"basic_info\": {\"name\": \"张三\"}}",
                     "additionalProperties": True
                 }
             },

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, Square } from 'lucide-react'
+import { Send, Paperclip, Mic, Square, FileText, X } from 'lucide-react'
 import styles from './ChatInput.module.css'
 
 export default function ChatInput({
@@ -10,6 +10,8 @@ export default function ChatInput({
   placeholder = '输入消息...',
   showActions = false,
   onUpload,
+  attachments,
+  onRemoveAttachment,
 }) {
   const [text, setText] = useState('')
   const textareaRef = useRef(null)
@@ -57,33 +59,55 @@ export default function ChatInput({
         </div>
       )}
       <div className={styles.inputWrapper}>
-        <textarea
-          ref={textareaRef}
-          className={styles.input}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={streaming ? 'AI 正在回复...' : placeholder}
-          disabled={disabled || streaming}
-          rows={1}
-        />
-        {streaming ? (
-          <button
-            className={styles.stopBtn}
-            onClick={onStop}
-            title="停止输出"
-          >
-            <Square size={16} />
-          </button>
-        ) : (
-          <button
-            className={styles.send}
-            onClick={handleSend}
-            disabled={disabled || !text.trim()}
-          >
-            <Send size={18} />
-          </button>
+        {attachments?.length > 0 && (
+          <div className={styles.attachmentBar}>
+            {attachments.map((file, i) => (
+              <div key={i} className={styles.fileTag}>
+                <FileText size={14} />
+                <span className={styles.fileName}>{file.name}</span>
+                {file.size && <span className={styles.fileSize}>{file.size}</span>}
+                {onRemoveAttachment && (
+                  <button
+                    className={styles.fileRemove}
+                    onClick={() => onRemoveAttachment(i)}
+                    title="移除"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
+        <div className={styles.inputRow}>
+          <textarea
+            ref={textareaRef}
+            className={styles.input}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={streaming ? 'AI 正在回复...' : placeholder}
+            disabled={disabled || streaming}
+            rows={1}
+          />
+          {streaming ? (
+            <button
+              className={styles.stopBtn}
+              onClick={onStop}
+              title="停止输出"
+            >
+              <Square size={16} />
+            </button>
+          ) : (
+            <button
+              className={styles.send}
+              onClick={handleSend}
+              disabled={disabled || !text.trim()}
+            >
+              <Send size={18} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

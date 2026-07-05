@@ -6,7 +6,6 @@ import {
   History,
   Trash2,
   Download,
-  RotateCcw,
   Plus,
   HelpCircle,
   Search,
@@ -34,6 +33,7 @@ export default function Resume() {
   const [hasResume, setHasResume] = useState(false)
   const [sessions, setSessions] = useState([])
   const [history, setHistory] = useState([])
+  const [currentPreviewId, setCurrentPreviewId] = useState(null)
 
   // UI 状态
   const [activeTab, setActiveTab] = useState('preview') // preview | edit | history | sessions
@@ -42,6 +42,9 @@ export default function Resume() {
 
   // 编辑状态
   const [editData, setEditData] = useState(null)
+
+  // 待发送的附件
+  const [pendingAttachments, setPendingAttachments] = useState([])
 
   // 会话标题编辑状态
   const [editingSessionId, setEditingSessionId] = useState(null)
@@ -66,6 +69,7 @@ export default function Resume() {
         if (data && data.basic_info) {
           setResumeData(data)
           setHasResume(true)
+          setCurrentPreviewId(data.id)
         }
       })
       .catch(() => {})
@@ -82,6 +86,36 @@ export default function Resume() {
       })
       .catch(() => {})
   }, [])
+
+  // 刷新简历数据（从后端重新加载最新版本）
+  const refreshResume = useCallback(async () => {
+    try {
+      const data = await apiJson('/resume')
+      if (data && data.basic_info) {
+        setResumeData(data)
+        setHasResume(true)
+        setCurrentPreviewId(data.id)
+      } else {
+        // 简历已全部删除
+        setResumeData(null)
+        setHasResume(false)
+        setCurrentPreviewId(null)
+      }
+    } catch {
+      // 静默失败
+    }
+  }, [])
+
+  // 页面可见性变化时自动刷新简历数据
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshResume()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [refreshResume])
 
   // 自动滚动到底部
   useEffect(() => {
@@ -119,9 +153,19 @@ export default function Resume() {
 
   // 发送消息
   const handleSend = async (text) => {
-    const userMsg = { role: 'user', content: text }
+    const userMsg = {
+      role: 'user',
+      content: text,
+      ...(pendingAttachments.length > 0 ? { attachments: pendingAttachments } : {}),
+    }
     const loadingMsg = { role: 'assistant', content: '', thinking: '' }
     setMessages((prev) => [...prev, userMsg, loadingMsg])
+
+    // 提取 file_ids 用于后端 prompt 注入
+    const fileIds = pendingAttachments
+      .map((a) => a.file_id)
+      .filter((id) => id != null)
+    setPendingAttachments([])
 
     let thinking = ''
     let content = ''
@@ -130,6 +174,7 @@ export default function Resume() {
       message: text,
       scenario: 'resume',
       ...(sessionId ? { session_id: sessionId } : {}),
+      ...(fileIds.length > 0 ? { file_ids: fileIds } : {}),
     }, {
       onEvent: (data) => {
         if (data.type === 'thinking') {
@@ -281,16 +326,15 @@ export default function Resume() {
     }
   }
 
-  // 恢复历史版本
-  const restoreHistory = async (id) => {
+  // 预览历史版本（不修改数据库）
+  const previewHistory = async (id) => {
     try {
-      await apiFetch(`/resume/history/${id}/restore`, { method: 'POST' })
-      const data = await apiJson('/resume')
+      const data = await apiJson(`/resume/history/${id}`)
+      setCurrentPreviewId(id)
       setResumeData(data)
-      showToast('版本已恢复')
       setActiveTab('preview')
     } catch {
-      showToast('恢复失败', 'error')
+      showToast('预览失败', 'error')
     }
   }
 
@@ -299,8 +343,12 @@ export default function Resume() {
     try {
       await apiDelete(`/resume/history/${id}`)
       setHistory((prev) => prev.filter((h) => h.id !== id))
-    } catch {
-      showToast('删除失败', 'error')
+      // 如果删除的是当前预览的版本，刷新到最新版本
+      if (id === currentPreviewId) {
+        refreshResume()
+      }
+    } catch (err) {
+      showToast(err.message || '删除失败', 'error')
     }
   }
 
@@ -363,13 +411,17 @@ export default function Resume() {
       const res = await fetch(`/resume/export?format=${format}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) throw new Error('导出失败')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.detail || '导出失败')
+      }
 
+      const name = resumeData?.basic_info?.name || '简历'
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `resume.${format === 'pdf' ? 'pdf' : 'docx'}`
+      a.download = `${name}的简历.${format}`
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
@@ -408,7 +460,8 @@ export default function Resume() {
       setShowSaveModal(false)
       setPendingSaveData(null)
 
-      // 刷新历史列表
+      // 刷新简历数据和历史列表
+      await refreshResume()
       if (activeTab === 'history') {
         loadHistory()
       }
@@ -522,7 +575,19 @@ export default function Resume() {
         throw new Error(err.detail || '上传失败')
       }
 
+      const uploadData = await res.json()
       showToast('文件上传成功，正在解析...')
+
+      // 添加到待发送附件列表（保留 file_id 用于发送）
+      const sizeStr = file.size > 1024 * 1024
+        ? `${(file.size / 1024 / 1024).toFixed(1)} MB`
+        : `${(file.size / 1024).toFixed(0)} KB`
+      setPendingAttachments((prev) => [...prev, {
+        file_id: uploadData.file_id,
+        name: file.name,
+        size: sizeStr,
+      }])
+
       const data = await apiJson('/resume')
       if (data && data.basic_info) {
         setResumeData(data)
@@ -590,9 +655,26 @@ export default function Resume() {
                 </div>
               </div>
             )}
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} role={msg.role} content={msg.content} thinking={msg.thinking} />
-            ))}
+            {messages.map((msg, i) => {
+              // 用户消息：从 content 中剥离注入的文件提示，重建附件数据
+              let displayContent = msg.content
+              let attachments = msg.attachments
+              if (msg.role === 'user' && msg.content) {
+                const match = msg.content.match(/^([\s\S]*?)\n\n用户上传了文件 \[([^\]]+)\]，使用 read_file 工具查看$/)
+                if (match) {
+                  displayContent = match[1]
+                  if (!attachments?.length) {
+                    attachments = match[2].split(', ').map((s) => {
+                      const id = s.replace('file_id=', '')
+                      return { file_id: Number(id), name: `文件 ${id}` }
+                    })
+                  }
+                }
+              }
+              return (
+                <ChatMessage key={i} role={msg.role} content={displayContent} thinking={msg.thinking} attachments={attachments} />
+              )
+            })}
             <div ref={messagesEnd} />
           </div>
 
@@ -605,6 +687,8 @@ export default function Resume() {
             placeholder="输入您的问题..."
             showActions
             onUpload={() => document.getElementById('file-upload').click()}
+            attachments={pendingAttachments}
+            onRemoveAttachment={(i) => setPendingAttachments((prev) => prev.filter((_, idx) => idx !== i))}
           />
           <input
             id="file-upload"
@@ -731,55 +815,60 @@ export default function Resume() {
                     <div className={styles.emptyDesc}>保存简历后将自动记录历史版本</div>
                   </div>
                 ) : (
-                  history.map((h) => (
-                    <div key={h.id} className={styles.historyItem}>
-                      <div className={styles.historyInfo}>
-                        {editingHistoryId === h.id ? (
-                          <input
-                            className={styles.historyNameInput}
-                            value={editingHistoryName}
-                            onChange={(e) => setEditingHistoryName(e.target.value)}
-                            onBlur={() => updateHistoryName(h.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') updateHistoryName(h.id)
-                              if (e.key === 'Escape') cancelEditHistoryName()
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            autoFocus
-                          />
-                        ) : (
-                          <div
-                            className={styles.historyName}
-                            onDoubleClick={() => startEditHistoryName(h)}
-                            title="双击编辑标题"
-                          >
-                            {h.name || formatHistoryTime(h.created_at)}
+                  history.map((h) => {
+                    const isCurrent = h.id === currentPreviewId
+                    return (
+                      <div
+                        key={h.id}
+                        className={`${styles.historyItem}${isCurrent ? ` ${styles.historyItemCurrent}` : ''}`}
+                        onClick={() => previewHistory(h.id)}
+                      >
+                        <div className={styles.historyInfo}>
+                          {editingHistoryId === h.id ? (
+                            <input
+                              className={styles.historyNameInput}
+                              value={editingHistoryName}
+                              onChange={(e) => setEditingHistoryName(e.target.value)}
+                              onBlur={() => updateHistoryName(h.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') updateHistoryName(h.id)
+                                if (e.key === 'Escape') cancelEditHistoryName()
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                          ) : (
+                            <div
+                              className={styles.historyName}
+                              onDoubleClick={(e) => { e.stopPropagation(); startEditHistoryName(h) }}
+                              title="双击编辑标题"
+                            >
+                              {h.name || formatHistoryTime(h.created_at)}
+                              {isCurrent && <span className={styles.historyBadge}>当前版本</span>}
+                            </div>
+                          )}
+                          <div className={styles.historyDate}>
+                            {new Date(h.created_at).toLocaleString('zh-CN')}
                           </div>
-                        )}
-                        <div className={styles.historyDate}>
-                          {new Date(h.created_at).toLocaleString('zh-CN')}
+                        </div>
+                        <div className={styles.historyActions}>
+                          <button
+                            className={styles.iconBtn}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              startEditHistoryName(h)
+                            }}
+                            title="编辑标题"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); deleteHistory(h.id) }} title="删除">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
-                      <div className={styles.historyActions}>
-                        <button
-                          className={styles.iconBtn}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            startEditHistoryName(h)
-                          }}
-                          title="编辑标题"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button className={styles.iconBtn} onClick={() => restoreHistory(h.id)} title="恢复">
-                          <RotateCcw size={14} />
-                        </button>
-                        <button className={styles.iconBtn} onClick={() => deleteHistory(h.id)} title="删除">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
             )}

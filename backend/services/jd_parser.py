@@ -2,9 +2,84 @@ import asyncio
 import json
 import re
 
+import httpx
+from bs4 import BeautifulSoup
 from jsonschema import validate, ValidationError
 
 from backend.schemas.jd import JDParsed, JDParseResponse
+
+# 请求超时（秒）
+REQUEST_TIMEOUT = 15
+
+# 请求头（模拟浏览器）
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+}
+
+
+def _extract_nuxt_jd(html: str) -> tuple[str, dict] | None:
+    """从 Nuxt SSR 页面的 window.__NUXT__ 中提取 JD 文本和元数据
+
+    Returns: (jd_text, metadata) 或 None
+    """
+    m = re.search(r'o\.info="((?:[^"\\]|\\.)*)"', html)
+    if not m:
+        return None
+    text = m.group(1).replace("\\n", "\n").replace("\\u002F", "/")
+    if len(text) < 20:
+        return None
+
+    # 提取结构化字段
+    def _field(pattern: str) -> str:
+        fm = re.search(pattern, html)
+        return fm.group(1).replace("\\u002F", "/") if fm else ""
+
+    meta = {
+        "position": _field(r'o\.iname="((?:[^"\\]|\\.)*)"'),
+        "company": _field(r'o\.cname="((?:[^"\\]|\\.)*)"'),
+        "salary": _field(r'o\.salary_desc="((?:[^"\\]|\\.)*)"'),
+        "location": _field(r'o\.address="((?:[^"\\]|\\.)*)"'),
+    }
+    return text, meta
+
+
+def _fetch_url_content(url: str) -> tuple[str, dict]:
+    """从 URL 抓取网页正文内容，返回 (正文文本, 元数据)"""
+    resp = httpx.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT, follow_redirects=True)
+    resp.raise_for_status()
+
+    html = resp.text
+
+    # 优先从结构化数据中提取（Nuxt SSR / JSON-LD / meta description）
+    nuxt_result = _extract_nuxt_jd(html)
+    if nuxt_result:
+        return nuxt_result
+
+    # JSON-LD 结构化数据
+    m = re.search(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', html, re.DOTALL)
+    if m:
+        try:
+            import json as _json
+            ld = _json.loads(m.group(1))
+            desc = ld.get("description", "")
+            if desc and len(desc) > 20:
+                return desc, {}
+        except Exception:
+            pass
+
+    # 兜底：BeautifulSoup 提取正文
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
+        tag.decompose()
+
+    main = soup.find("article") or soup.find("main") or soup.find("body")
+    if not main:
+        raise ValueError("无法提取网页正文内容")
+
+    text = main.get_text(separator="\n", strip=True)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return "\n".join(lines), {}
+
 
 # JD JSON Schema 校验规则
 JD_SCHEMA = {
@@ -238,4 +313,55 @@ async def parse_jd(text: str) -> JDParseResponse:
         return JDParseResponse(
             success=False,
             error=f"解析异常：{str(e)}",
+        )
+
+
+async def parse_jd_from_url(url: str) -> JDParseResponse:
+    """从 URL 抓取并解析 JD"""
+    try:
+        # 抓取网页内容和元数据
+        text, meta = await asyncio.wait_for(
+            asyncio.to_thread(_fetch_url_content, url),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if not text or len(text) < 20:
+            return JDParseResponse(
+                success=False,
+                error="网页内容过少，无法解析为 JD",
+            )
+
+        # 调用已有的文本解析逻辑
+        result = await parse_jd(text)
+
+        # 用结构化元数据补全正则解析缺失或明显错误的字段
+        if result.success and meta:
+            data = result.data
+            # position 若是章节标题（如"岗位职责："）则用元数据覆盖
+            if meta.get("position"):
+                if not data.position or data.position.endswith(("：", ":", "职责", "要求")):
+                    data.position = meta["position"]
+            if not data.company and meta.get("company"):
+                data.company = meta["company"]
+            if not data.salary and meta.get("salary"):
+                data.salary = meta["salary"]
+            if not data.location and meta.get("location"):
+                data.location = meta["location"]
+
+        return result
+
+    except httpx.TimeoutException:
+        return JDParseResponse(
+            success=False,
+            error=f"网页请求超时（{REQUEST_TIMEOUT}秒），请检查 URL 或稍后重试",
+        )
+    except httpx.HTTPStatusError as e:
+        return JDParseResponse(
+            success=False,
+            error=f"网页请求失败（HTTP {e.response.status_code}）",
+        )
+    except Exception as e:
+        return JDParseResponse(
+            success=False,
+            error=f"URL 解析异常：{str(e)}",
         )

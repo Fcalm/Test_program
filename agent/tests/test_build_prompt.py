@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from agent.prompts.build_prompt import build_static_prompt, build_system_prompt, _get_tools_description, _get_user_md, STABLE_PROMPT
+from agent.prompts.build_prompt import build_static_prompt, build_system_prompt, _get_tools_description, _get_memory_md, STABLE_PROMPT
 
 
 class TestBuildStaticPrompt:
@@ -83,12 +83,12 @@ class TestBuildSystemPrompt:
         # 应包含动态信息
         assert "第 2 轮" in prompt
 
-    def test_dynamic_context_resume_with_tool_results(self):
-        """测试 resume 场景有工具结果时的动态上下文"""
+    def test_dynamic_context_resume_with_key_data(self):
+        """测试 resume 场景有关键数据时的动态上下文"""
         static_prompt = build_static_prompt("resume")
         context = {
             "work": "resume",
-            "tool_results": {
+            "key_data": {
                 "parse_resume": {
                     "success": True,
                     "basic_info": {"name": "张三"},
@@ -97,7 +97,6 @@ class TestBuildSystemPrompt:
                     "project_exp": [{"name": "项目A"}],
                 },
             },
-            "stage": "编辑",
         }
         prompt = build_system_prompt(static_prompt, context)
 
@@ -111,8 +110,7 @@ class TestBuildSystemPrompt:
         static_prompt = build_static_prompt("resume")
         context = {
             "work": "resume",
-            "tool_results": {},
-            "stage": "",
+            "key_data": {},
         }
         prompt = build_system_prompt(static_prompt, context)
 
@@ -124,7 +122,7 @@ class TestBuildSystemPrompt:
         static_prompt = build_static_prompt("resume")
         context = {
             "work": "resume",
-            "tool_results": {
+            "key_data": {
                 "parse_jd": {
                     "success": True,
                     "company": "字节跳动",
@@ -167,47 +165,87 @@ class TestGetToolsDescription:
         assert "### read_file" in desc
 
 
-class TestGetUserMd:
-    """测试 _get_user_md 函数"""
+class TestGetMemoryMd:
+    """测试 _get_memory_md 函数"""
 
-    @patch("agent.prompts.build_prompt.USER_MD_PATH")
-    def test_file_exists(self, mock_path):
-        """测试文件存在时读取内容"""
+    @patch("agent.prompts.build_prompt.MEMORY_MD_PATH")
+    def test_file_exists_with_content(self, mock_path):
+        """测试文件存在且有内容时读取"""
         mock_path.exists.return_value = True
-        mock_path.read_text.return_value = """# 用户配置
+        mock_path.read_text.return_value = """## 用户偏好
+- 喜欢简洁风格
 
-## 语言偏好
-- 主要语言：中文
+## 工作习惯
+- 反复打磨措辞
 
-> 这是注释
+## 项目约定
+- 简历单页
+
+## 关键教训
+- 成果要实际
 """
 
-        result = _get_user_md()
+        result = _get_memory_md()
 
+        # 应包含持久化记忆标头
+        assert "MEMORY" in result
+        assert "持久化记忆" in result
         # 应包含内容
-        assert "语言偏好" in result
-        assert "中文" in result
-        # 不应包含注释
-        assert "这是注释" not in result
+        assert "用户偏好" in result
+        assert "喜欢简洁风格" in result
+        # 应使用 § 分隔
+        assert "§" in result
 
-    @patch("agent.prompts.build_prompt.USER_MD_PATH")
+    @patch("agent.prompts.build_prompt.MEMORY_MD_PATH")
     def test_file_not_exists(self, mock_path):
         """测试文件不存在时返回空字符串"""
         mock_path.exists.return_value = False
 
-        result = _get_user_md()
+        result = _get_memory_md()
 
         assert result == ""
 
-    @patch("agent.prompts.build_prompt.USER_MD_PATH")
+    @patch("agent.prompts.build_prompt.MEMORY_MD_PATH")
+    def test_file_empty(self, mock_path):
+        """测试文件为空时返回空字符串"""
+        mock_path.exists.return_value = True
+        mock_path.read_text.return_value = ""
+
+        result = _get_memory_md()
+
+        assert result == ""
+
+    @patch("agent.prompts.build_prompt.MEMORY_MD_PATH")
     def test_read_error(self, mock_path):
         """测试读取错误时返回空字符串"""
         mock_path.exists.return_value = True
         mock_path.read_text.side_effect = Exception("Read error")
 
-        result = _get_user_md()
+        result = _get_memory_md()
 
         assert result == ""
+
+    @patch("agent.prompts.build_prompt.MEMORY_MD_PATH")
+    def test_contains_usage_percentage(self, mock_path):
+        """测试包含使用率百分比"""
+        mock_path.exists.return_value = True
+        mock_path.read_text.return_value = """## 用户偏好
+- 喜欢简洁风格
+
+## 工作习惯
+
+
+## 项目约定
+
+
+## 关键教训
+"""
+
+        result = _get_memory_md()
+
+        # 应包含使用率信息
+        assert "%" in result
+        assert "chars" in result
 
 
 if __name__ == "__main__":

@@ -1,9 +1,12 @@
 """文件读取工具 - 让 LLM 读取用户上传的文件内容"""
 
 import json
+import logging
 
 from agent.tools.basetool import BaseTool
 from agent.tools.registry import registry
+
+logger = logging.getLogger(__name__)
 
 
 class ReadFileTool(BaseTool):
@@ -15,7 +18,7 @@ class ReadFileTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "读取用户上传的文件内容。传入 file_id 返回文件提取的文本。用于在对话过程中按需读取文件。"
+        return "当用户上传文件时，读取文件内容。"
 
     @property
     def parameters(self) -> dict:
@@ -44,6 +47,7 @@ class ReadFileTool(BaseTool):
 
     async def execute(self, file_id: int, max_chars: int = 8000, **kwargs) -> str:
         """执行文件读取"""
+        logger.debug("调用工具: %s", self.name)
         from backend.services.file_storage import get_file_text_for_agent
 
         # 从 kwargs 获取 db 和 user_id（由 agent loop 注入）

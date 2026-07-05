@@ -1,0 +1,68 @@
+.circle {
+  border-radius: 50%;
+  border: 4px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.high .value {
+  color: var(--success);
+}
+
+.medium .value {
+  color: var(--warning);
+}
+
+.low .value {
+  color: var(--error);
+}
+
+.label {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+.barGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.barLabel {
+  font-size: 12px;
+  color: var(--gray-500);
+  min-width: 60px;
+}
+
+.bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.barValue {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+  min-width: 24px;
+  text-align: right;
+}

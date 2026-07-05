@@ -36,8 +36,68 @@
   flex: 1;
   position: relative;
   display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.inputRow {
+  display: flex;
   align-items: flex-end;
   gap: 8px;
+}
+
+/* 附件标签栏 */
+.attachmentBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 4px 0;
+}
+
+.fileTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.fileName {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.fileSize {
+  font-size: 11px;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+.fileRemove {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--gray-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.fileRemove:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
 }
 
 .input {
@@ -55,6 +115,7 @@
   min-height: 48px;
   max-height: 120px;
 }
+
 
 .input::placeholder {
   color: var(--text-muted);

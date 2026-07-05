@@ -5,15 +5,15 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from typing import AsyncGenerator
 
 from agent.core.state import AgentState
-from agent.core.client import create_client, create_client_for_config, get_model
+from agent.core.client import create_client_for_config, create_client
 from agent.prompts.build_prompt import build_static_prompt, build_system_prompt
 from agent.tools.registry import registry
 from agent.hooks.compact_hook import CompactHook, should_update_summary, update_summary
 from agent.hooks.compress_guard import CompressGuard
-from backend.config import settings
 from backend.provider_config import ResolvedConfig
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,8 @@ class BaseAgent:
         self._compact_hook = CompactHook(
             model=self.model,
             context_limit=self.context_limit,
-            guard=self._guard
+            guard=self._guard,
+            resolved_config=self.resolved_config,
         )
 
         # 进入 loop 前构建静态 prompt（会话内不变）
@@ -133,7 +134,9 @@ class BaseAgent:
     def model(self) -> str:
         if self.resolved_config:
             return self.resolved_config.model
-        return get_model()
+        from backend.provider_config import load_yaml_config
+        defaults = load_yaml_config().get("defaults", {})
+        return defaults.get("model", "deepseek-v4-flash")
 
     @property
     def context_limit(self) -> int:
@@ -421,7 +424,7 @@ class BaseAgent:
 
             # 检查是否需要更新滚动摘要（token 驱动）
             if should_update_summary(self.state, self.model, self.context_limit):
-                await update_summary(self.state, self.model, self.context_limit)
+                await update_summary(self.state, self.model, self.context_limit, self.resolved_config)
 
             # 重新构建消息（包含工具结果）
             messages = self._build_messages(user_message)
@@ -537,7 +540,7 @@ class BaseAgent:
 
                 # 检查是否需要更新滚动摘要（token 驱动）
                 if should_update_summary(self.state, self.model, self.context_limit):
-                    await update_summary(self.state, self.model, self.context_limit)
+                    await update_summary(self.state, self.model, self.context_limit, self.resolved_config)
 
                 # 重新构建消息
                 messages = self._build_messages(user_message)
@@ -556,7 +559,18 @@ class BaseAgent:
 
             # 检测轮次切换标签（支持 <round_end />、<round_end/>、<round_end> 等变体）
             if self.scenario == "interview" and "<round_end" in full_content.lower():
-                yield {"type": "round_end", "data": {"session_id": self.session_id}}
+                # 从消息历史推断当前轮次
+                round_num = 1
+                for m in self.state.messages:
+                    if m.get("role") == "user" and "第" in m.get("content", "") and "轮" in m.get("content", ""):
+                        match = re.search(r"第\s*(\d+)\s*轮", m["content"])
+                        if match:
+                            round_num = max(round_num, int(match.group(1)))
+                # 保存消息时剥离标签
+                clean_content = re.sub(r"<round_end\s*/?>", "", full_content, flags=re.IGNORECASE).strip()
+                self.state.messages[-1]["content"] = clean_content
+                yield {"type": "round_end", "data": {"session_id": self.session_id, "round": round_num}}
+                return
 
             yield {"type": "done", "data": {"response": full_content, "session_id": self.session_id}}
             return

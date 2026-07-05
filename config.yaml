@@ -1,44 +1,38 @@
-# config.yaml - LLM 服务商模板 & 全局默认配置
-# API Key 不存储在此文件中，由用户在前端配置后存入数据库
-
+defaults:
+  higher_model: deepseek-v4-pro
+  max_tokens: null
+  model: deepseek-v4-flash
+  provider: deepseek
 providers:
   deepseek:
-    name: "DeepSeek"
-    base_url: "https://api.deepseek.com"
+    base_url: https://api.deepseek.com
+    default_model: deepseek-v4-flash
     models:
-      - id: "deepseek-v4-flash"
-        context_limit: 128000
-      - id: "deepseek-v4-pro"
-        context_limit: 200000
-    default_model: "deepseek-v4-flash"
+    - context_limit: 128000
+      id: deepseek-v4-flash
+    - context_limit: 200000
+      id: deepseek-v4-pro
+    name: DeepSeek
     requires_api_key: true
-
-  mimo:
-    name: "MiMo (小米)"
-    base_url: "https://api.xiaomi.com/v1"
-    models:
-      - id: "mimo-7b"
-        context_limit: 32000
-      - id: "mimo-70b"
-        context_limit: 128000
-    default_model: "mimo-7b"
-    requires_api_key: true
-
   local:
-    name: "本地模型 (Ollama)"
-    base_url: "http://localhost:11434/v1"
+    base_url: http://localhost:11434/v1
+    default_model: qwen2.5:7b
     models:
-      - id: "qwen2.5:7b"
-        context_limit: 32000
-      - id: "llama3.1:8b"
-        context_limit: 128000
-      - id: "deepseek-r1:7b"
-        context_limit: 32000
-    default_model: "qwen2.5:7b"
+    - context_limit: 32000
+      id: qwen2.5:7b
+    - context_limit: 128000
+      id: llama3.1:8b
+    - context_limit: 32000
+      id: deepseek-r1:7b
+    name: 本地模型 (Ollama)
     requires_api_key: false
-
-defaults:
-  provider: "deepseek"
-  model: "deepseek-v4-flash"
-  higher_model: "deepseek-v4-pro"
-  max_tokens: null
+  mimo:
+    base_url: https://api.xiaomi.com/v1
+    default_model: mimo-v2.5
+    models:
+    - context_limit: 256000
+      id: mimo-v2.5
+    - context_limit: 256000
+      id: mimo-v2.5-pro
+    name: MiMo (小米)
+    requires_api_key: true

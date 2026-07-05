@@ -13,27 +13,27 @@ TABLE_SCHEMAS = {
     },
     "uploaded_files": {
         "key_field": "user_id",
-        "fields": ["original_name", "storage_path", "file_type", "file_size", "raw_text", "char_count"],
+        "fields": ["original_name", "storage_path", "file_type", "file_size", "raw_text", "char_count", "content_hash"],
+    },
+    "analysis_reports": {
+        "key_field": "session_id",
+        "fields": ["user_id", "report_data", "status"],
     },
 }
 
 # 只读表（LLM 可读不可写）
-READONLY_TABLES = {"agent_sessions", "users", "resume_history"}
+READONLY_TABLES = {"agent_sessions", "users"}
 
 # 完整表 schema（包含只读表，用于读取）
 ALL_TABLE_SCHEMAS = {
     **TABLE_SCHEMAS,
     "agent_sessions": {
         "key_field": "user_id",
-        "fields": ["scenario", "stage", "messages", "tool_results", "usage", "turn_count", "error"],
+        "fields": ["scenario", "messages", "key_data", "usage", "turn_count", "error"],
     },
     "users": {
         "key_field": "id",
         "fields": ["username", "email", "is_active"],
-    },
-    "resume_history": {
-        "key_field": "resume_id",
-        "fields": ["snapshot", "changed_fields"],
     },
 }
 

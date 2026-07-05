@@ -87,6 +87,49 @@
   white-space: pre-wrap;
 }
 
+/* 文件标签 */
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fileTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-700);
+  max-width: 260px;
+}
+
+.user .fileTag {
+  background: rgba(0, 0, 0, 0.727);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fbfbfb;
+}
+
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.fileSize {
+  font-size: 11px;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+.user .fileSize {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 /* Markdown 样式 */
 .markdown {
   white-space: normal;

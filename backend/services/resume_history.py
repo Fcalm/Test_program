@@ -1,31 +1,41 @@
+from datetime import datetime
+
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.resume import Resume, ResumeHistory
+from backend.models.resume import Resume
 
-# 简历中参与历史对比的字段
-DIFF_FIELDS = ["basic_info", "education", "internship_exp", "project_exp", "personal_strengths"]
+# 简历数据字段
+RESUME_FIELDS = ["basic_info", "education", "internship_exp", "project_exp", "personal_strengths"]
 
-# 历史记录上限
-MAX_HISTORY_PER_RESUME = 50
+# 历史版本上限
+MAX_VERSIONS = 50
 
 
-async def _cleanup_old_history(db: AsyncSession, resume_id: int) -> None:
-    """清理超出上限的旧历史记录"""
+async def _next_version(db: AsyncSession, user_id: int) -> int:
+    """获取下一个版本号"""
+    result = await db.execute(
+        select(func.max(Resume.version)).where(Resume.user_id == user_id)
+    )
+    max_ver = result.scalar() or 0
+    return max_ver + 1
+
+
+async def _cleanup_old_versions(db: AsyncSession, user_id: int) -> None:
+    """清理超出上限的旧版本（保留最新的，删除最旧的）"""
     count_result = await db.execute(
-        select(func.count()).where(ResumeHistory.resume_id == resume_id)
+        select(func.count()).where(Resume.user_id == user_id)
     )
     total = count_result.scalar() or 0
 
-    if total <= MAX_HISTORY_PER_RESUME:
+    if total <= MAX_VERSIONS:
         return
 
-    # 删除最旧的记录
-    excess = total - MAX_HISTORY_PER_RESUME
+    excess = total - MAX_VERSIONS
     old_records = await db.execute(
-        select(ResumeHistory)
-        .where(ResumeHistory.resume_id == resume_id)
-        .order_by(ResumeHistory.created_at.asc())
+        select(Resume)
+        .where(Resume.user_id == user_id)
+        .order_by(Resume.version.asc())
         .limit(excess)
     )
     for record in old_records.scalars().all():
@@ -33,104 +43,124 @@ async def _cleanup_old_history(db: AsyncSession, resume_id: int) -> None:
 
 
 async def get_resume(db: AsyncSession, user_id: int) -> Resume | None:
-    result = await db.execute(select(Resume).where(Resume.user_id == user_id))
+    """获取用户的最新版本简历"""
+    result = await db.execute(
+        select(Resume)
+        .where(Resume.user_id == user_id)
+        .order_by(Resume.version.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_resume_by_id(db: AsyncSession, resume_id: int) -> Resume | None:
+    """按 ID 获取指定版本"""
+    result = await db.execute(select(Resume).where(Resume.id == resume_id))
     return result.scalar_one_or_none()
 
 
 async def create_resume(db: AsyncSession, user_id: int, data: dict, name: str | None = None) -> Resume:
-    resume = Resume(user_id=user_id, **data)
-    db.add(resume)
-    await db.flush()
-
-    # 首次保存：全量快照
-    history = ResumeHistory(
-        resume_id=resume.id,
-        name=name,
-        snapshot=data,
-        changed_fields=DIFF_FIELDS,
+    """创建简历（自动分配版本号）"""
+    version = await _next_version(db, user_id)
+    resume = Resume(
+        user_id=user_id,
+        version=version,
+        name=name or _default_name(),
+        **data,
     )
-    db.add(history)
+    db.add(resume)
     await db.flush()
     await db.refresh(resume)
     return resume
 
 
 async def update_resume(db: AsyncSession, resume: Resume, data: dict, name: str | None = None) -> Resume:
-    # 收集实际变化的字段
+    """更新简历：有变化时创建新版本行"""
+    # 检查是否有实际变化
     changed = []
-    snapshot = {}
-    for field in DIFF_FIELDS:
+    for field in RESUME_FIELDS:
         new_val = data.get(field)
         old_val = getattr(resume, field)
         if new_val is not None and new_val != old_val:
             changed.append(field)
-            snapshot[field] = new_val
-            setattr(resume, field, new_val)
 
-    # 有变化才记录历史
-    if changed:
-        # 如果没有指定名称，使用默认格式
-        if not name:
-            from datetime import datetime
-            now = datetime.now()
-            name = f"{now.year}年{now.month}月{now.day}日 {now.hour:02d}:{now.minute:02d}"
+    if not changed:
+        return resume
 
-        history = ResumeHistory(
-            resume_id=resume.id,
-            name=name,
-            snapshot=snapshot,
-            changed_fields=changed,
-        )
-        db.add(history)
-        await db.flush()
-
-        # 清理旧历史
-        await _cleanup_old_history(db, resume.id)
-
-    await db.flush()
-    await db.refresh(resume)
-    return resume
-
-
-async def update_history_name(db: AsyncSession, history_id: int, resume_id: int, name: str) -> bool:
-    """更新历史记录名称"""
-    result = await db.execute(
-        select(ResumeHistory).where(
-            ResumeHistory.id == history_id,
-            ResumeHistory.resume_id == resume_id,
-        )
+    # 创建新版本行
+    new_version = await _next_version(db, resume.user_id)
+    new_resume = Resume(
+        user_id=resume.user_id,
+        version=new_version,
+        name=name or _default_name(),
+        **{field: data.get(field, getattr(resume, field)) for field in RESUME_FIELDS},
     )
-    history = result.scalar_one_or_none()
-    if not history:
-        return False
-
-    history.name = name
+    db.add(new_resume)
     await db.flush()
-    return True
+
+    # 清理旧版本
+    await _cleanup_old_versions(db, resume.user_id)
+
+    await db.refresh(new_resume)
+    return new_resume
 
 
-async def get_history_list(
-    db: AsyncSession, resume_id: int, limit: int = 50, offset: int = 0
-) -> list[ResumeHistory]:
+async def get_history_list(db: AsyncSession, user_id: int, limit: int = 50, offset: int = 0) -> list[Resume]:
+    """获取用户的所有版本列表（最新在前）"""
     result = await db.execute(
-        select(ResumeHistory)
-        .where(ResumeHistory.resume_id == resume_id)
-        .order_by(ResumeHistory.created_at.desc())
+        select(Resume)
+        .where(Resume.user_id == user_id)
+        .order_by(Resume.version.desc())
         .limit(limit)
         .offset(offset)
     )
     return list(result.scalars().all())
 
 
-async def restore_history(db: AsyncSession, resume: Resume, history: ResumeHistory) -> Resume:
-    """恢复历史版本：将历史快照中的字段合并回简历
+async def restore_version(db: AsyncSession, target: Resume) -> Resume:
+    """恢复到指定版本：更新当前最新版本的内容为目标版本的副本"""
+    current = await get_resume(db, target.user_id)
+    if not current:
+        return target
+    if current.id == target.id:
+        return current
 
-    注意：恢复操作不会创建新的历史记录，避免历史记录无限增长。
-    """
-    for field in history.changed_fields:
-        if field in history.snapshot:
-            setattr(resume, field, history.snapshot[field])
+    for field in RESUME_FIELDS:
+        setattr(current, field, getattr(target, field))
 
     await db.flush()
-    await db.refresh(resume)
-    return resume
+    await db.refresh(current)
+    return current
+
+
+async def update_version_name(db: AsyncSession, resume_id: int, user_id: int, name: str) -> bool:
+    """修改版本名称"""
+    result = await db.execute(
+        select(Resume).where(Resume.id == resume_id, Resume.user_id == user_id)
+    )
+    resume = result.scalar_one_or_none()
+    if not resume:
+        return False
+
+    resume.name = name
+    await db.flush()
+    return True
+
+
+async def delete_version(db: AsyncSession, resume_id: int, user_id: int) -> bool:
+    """删除指定版本"""
+    result = await db.execute(
+        select(Resume).where(Resume.id == resume_id, Resume.user_id == user_id)
+    )
+    resume = result.scalar_one_or_none()
+    if not resume:
+        return False
+
+    await db.delete(resume)
+    await db.flush()
+    return True
+
+
+def _default_name() -> str:
+    now = datetime.now()
+    return f"{now.year}年{now.month}月{now.day}日 {now.hour:02d}:{now.minute:02d}"

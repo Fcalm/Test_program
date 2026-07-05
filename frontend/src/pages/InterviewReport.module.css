@@ -1,0 +1,249 @@
+.main {
+  padding: 48px;
+  max-width: 960px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  font-size: 14px;
+  color: var(--gray-400);
+}
+
+/* 返回按钮 */
+.goBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 32px;
+}
+
+.goBack:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-900);
+}
+
+.backBtn {
+  padding: 10px 24px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+/* 报告头部 */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 48px;
+  padding: 32px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  animation: fadeIn 0.4s ease;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.date {
+  font-size: 13px;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+.summary {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+/* 通用区块 */
+.section {
+  margin-bottom: 40px;
+  animation: fadeIn 0.4s ease;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+/* 维度得分 */
+.dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+}
+
+/* 逐题分析 */
+.questions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.questionCard {
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.questionCard:hover {
+  border-color: var(--gray-300);
+}
+
+.questionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.questionIndex {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.questionText {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-900);
+  line-height: 1.5;
+}
+
+.questionScore {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-700);
+  padding: 4px 10px;
+  background: var(--gray-100);
+  border-radius: 6px;
+}
+
+/* 回答区块 */
+.answerBlock {
+  padding: 16px;
+  background: var(--gray-50, #f9fafb);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.answerLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.answerText {
+  font-size: 14px;
+  color: var(--gray-700);
+  line-height: 1.6;
+}
+
+/* 标签 */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tagStrength {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.tagSuggestion {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #fefce8;
+  color: #ca8a04;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .main {
+    padding: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .questionHeader {
+    flex-wrap: wrap;
+  }
+
+  .questionText {
+    flex-basis: calc(100% - 44px);
+  }
+}

@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.models.user import User
-from backend.models.uploaded_file import UploadedFile, FileText
 from backend.services.file_storage import (
     save_and_extract,
     get_user_files,
@@ -57,14 +56,12 @@ async def upload_file(
     if error:
         raise HTTPException(status_code=400, detail=error)
 
-    char_count = uploaded.text.char_count if uploaded.text else 0
-
     return FileUploadResponse(
         file_id=uploaded.id,
         original_name=uploaded.original_name,
         file_type=uploaded.file_type,
         file_size=uploaded.file_size,
-        char_count=char_count,
+        char_count=uploaded.char_count,
         created_at=uploaded.created_at,
     )
 
@@ -76,16 +73,17 @@ async def list_files(
 ):
     """列出当前用户的所有文件"""
     files = await get_user_files(db, current_user.id)
-    items = []
-    for f in files:
-        items.append(FileInfo(
+    items = [
+        FileInfo(
             file_id=f.id,
             original_name=f.original_name,
             file_type=f.file_type,
             file_size=f.file_size,
-            char_count=f.text.char_count if f.text else 0,
+            char_count=f.char_count,
             created_at=f.created_at,
-        ))
+        )
+        for f in files
+    ]
     return FileListResponse(files=items)
 
 
@@ -96,19 +94,18 @@ async def get_file_info(
     db: AsyncSession = Depends(get_db),
 ):
     """获取单个文件信息"""
-    result = await get_file_with_text(db, file_id, current_user.id)
-    if not result:
+    uploaded = await get_file_with_text(db, file_id, current_user.id)
+    if not uploaded:
         raise HTTPException(status_code=404, detail="文件不存在")
 
-    uploaded, text = result
     return {
         "file_id": uploaded.id,
         "original_name": uploaded.original_name,
         "file_type": uploaded.file_type,
         "file_size": uploaded.file_size,
-        "char_count": text.char_count if text else 0,
+        "char_count": uploaded.char_count,
         "created_at": uploaded.created_at,
-        "raw_preview": text.raw_text[:500] if text else None,
+        "raw_preview": uploaded.raw_text[:500] if uploaded.raw_text else None,
     }
 
 

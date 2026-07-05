@@ -1,0 +1,465 @@
+/* ===== 页面布局 ===== */
+.page {
+  padding: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gray-900);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+.newBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  background: var(--gray-900);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.newBtn:hover {
+  background: var(--gray-800);
+}
+
+/* ===== 当前简历板块 ===== */
+.resumeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+
+.resumeBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-500);
+}
+
+.resumeBarLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.resumePickerWrap {
+  position: relative;
+}
+
+.resumePickerBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--white);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.resumePickerBtn:hover {
+  border-color: var(--gray-400);
+}
+
+.resumePickerName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumePickerDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 240px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  overflow: hidden;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pickerItemCurrent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--gray-900);
+  background: var(--gray-50);
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: var(--white);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.pickerItem:hover {
+  background: var(--gray-50);
+}
+
+.pickerItemName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pickerItemTag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.pickerItemTime {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.pickerDivider {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-top: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+
+.pickerEmpty {
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-400);
+}
+
+/* ===== 加载状态 ===== */
+.loading {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--gray-400);
+  font-size: 14px;
+}
+
+/* ===== 空状态按钮 ===== */
+.emptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  background: var(--gray-900);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.emptyBtn:hover {
+  background: var(--gray-800);
+}
+
+/* ===== 卡片网格 ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+/* ===== 会话卡片 ===== */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--gray-400);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.cardHeader {
+  margin-bottom: 16px;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 状态圆点 */
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusActive {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-bg);
+}
+
+.statusPending {
+  background: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-bg);
+}
+
+.statusLabel {
+  font-size: 12px;
+  color: var(--gray-400);
+}
+
+/* 元信息 */
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* 卡片底部操作 */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-900);
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+/* ===== 弹窗表单 ===== */
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formGroup:last-child {
+  margin-bottom: 0;
+}
+
+.formLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.formInput,
+.formTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--gray-900);
+  background: var(--white);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  border-color: var(--primary);
+}
+
+.formTextarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.formInput::placeholder,
+.formTextarea::placeholder {
+  color: var(--gray-400);
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-900);
+}
+
+.submitBtn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--gray-900);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.submitBtn:hover {
+  background: var(--gray-800);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .page {
+    padding: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .newBtn {
+    align-self: flex-start;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

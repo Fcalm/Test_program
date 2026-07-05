@@ -1,6 +1,6 @@
 """各 work 场景的动态提示词模板
 
-从 State 的 tool_results 中提取数据，构建动态提示词。
+从 State 的 key_data 中提取数据，构建动态提示词。
 """
 
 from typing import Any
@@ -22,11 +22,11 @@ def build_dynamic_prompt(work: str, context: dict[str, Any]) -> str:
     """
     构建动态提示词
 
-    从 context 中读取 tool_results 和 stage，提取所需数据。
+    从 context 中读取 key_data，提取所需数据。
 
     Args:
         work: 当前 work 类型
-        context: 动态上下文数据（包含 tool_results、stage 等）
+        context: 动态上下文数据（包含 key_data 等）
 
     Returns:
         格式化后的动态提示词
@@ -35,10 +35,10 @@ def build_dynamic_prompt(work: str, context: dict[str, Any]) -> str:
     if not template:
         return ""
 
-    # 从 tool_results 中提取数据
-    tool_results = context.get("tool_results", {})
-    resume_data = _extract_resume_data(tool_results)
-    jd_data = _extract_jd_data(tool_results)
+    # 从 key_data 中提取数据
+    key_data = context.get("key_data", {})
+    resume_data = _extract_resume_data(key_data)
+    jd_data = _extract_jd_data(key_data)
 
     # 构建状态描述
     resume_status = _build_resume_status(resume_data)
@@ -58,16 +58,16 @@ def build_dynamic_prompt(work: str, context: dict[str, Any]) -> str:
         return ""
 
 
-def _extract_resume_data(tool_results: dict) -> dict | None:
-    """从 tool_results 中提取简历数据"""
+def _extract_resume_data(key_data: dict) -> dict | None:
+    """从 key_data 中提取简历数据"""
     # 尝试从 parse_resume 工具结果中获取
-    parse_result = tool_results.get("parse_resume")
+    parse_result = key_data.get("parse_resume")
     if parse_result and isinstance(parse_result, dict):
         if parse_result.get("success") and "basic_info" in parse_result:
             return parse_result
 
     # 尝试从 get_resume_table 工具结果中获取
-    get_result = tool_results.get("get_resume_table")
+    get_result = key_data.get("get_resume_table")
     if get_result and isinstance(get_result, dict):
         if get_result.get("success") and "basic_info" in get_result:
             return get_result
@@ -75,9 +75,9 @@ def _extract_resume_data(tool_results: dict) -> dict | None:
     return None
 
 
-def _extract_jd_data(tool_results: dict) -> dict | None:
-    """从 tool_results 中提取 JD 数据"""
-    parse_result = tool_results.get("parse_jd")
+def _extract_jd_data(key_data: dict) -> dict | None:
+    """从 key_data 中提取 JD 数据"""
+    parse_result = key_data.get("parse_jd")
     if parse_result and isinstance(parse_result, dict):
         if parse_result.get("success"):
             return parse_result

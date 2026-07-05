@@ -1,0 +1,382 @@
+/* ===== 页面容器 ===== */
+.main {
+  padding: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease;
+}
+
+/* ===== 简历信息卡片 ===== */
+.resumeCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.resumeAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.resumeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.resumeName {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.resumeMeta {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+}
+
+.resumeSkills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skillTag {
+  padding: 4px 10px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+/* ===== 筛选表单 ===== */
+.filterSection {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.5fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.filterInput,
+.filterSelect {
+  padding: 10px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--gray-900);
+  background: var(--white);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  border-color: var(--gray-400);
+}
+
+.filterInput::placeholder {
+  color: var(--gray-400);
+}
+
+.searchBtn {
+  padding: 10px 24px;
+  background: var(--gray-900);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.searchBtn:hover {
+  background: var(--gray-800);
+}
+
+.searchBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 结果区域 ===== */
+.resultsSection {
+  animation: fadeIn 0.4s ease;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.resultsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.resultsCount {
+  font-size: 13px;
+  color: var(--gray-400);
+  margin-left: 8px;
+  font-weight: 400;
+}
+
+.filterTabs {
+  display: flex;
+  gap: 4px;
+  background: var(--gray-100);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.filterTab {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--gray-500);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.filterTab:hover {
+  color: var(--gray-700);
+}
+
+.filterTabActive {
+  background: var(--white);
+  color: var(--gray-900);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== 职位卡片 ===== */
+.jobList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jobCard {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  padding: 20px 24px;
+  transition: border-color 0.2s;
+}
+
+.jobCard:hover {
+  border-color: var(--gray-400);
+}
+
+.jobCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.jobTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.jobCompany {
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* 匹配分数 */
+.score {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scoreHigh {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.scoreMid {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.scoreLow {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.scoreLabel {
+  font-size: 10px;
+  font-weight: 400;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+/* 匹配原因 */
+.jobReason {
+  font-size: 13px;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+/* 元信息行 */
+.jobMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.metaIcon {
+  color: var(--gray-400);
+}
+
+/* 标签 */
+.jobTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 来源 */
+.jobSource {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-100);
+}
+
+/* ===== 加载状态 ===== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 16px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--gray-900);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: var(--gray-400);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 1024px) {
+  .filterGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .searchBtn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 24px;
+  }
+
+  .resumeCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .jobCardHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .score {
+    align-self: flex-start;
+  }
+
+  .resultsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

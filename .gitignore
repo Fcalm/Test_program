@@ -1,63 +1,70 @@
-# Dependencies
+# --- 依赖与虚拟环境 ---
 node_modules/
 venv/
+.venv/
+env/
+ENV/
+
+# --- Python ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+*.egg-info/
+*.egg
+*.manifest
+*.spec
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Environment variables
+# --- 前端构建产物 ---
+frontend/dist/
+
+# --- 环境变量与密钥 ---
 .env
 .env.local
 .env.*.local
 
-# IDE
+# --- 数据库与用户数据 ---
+data/
+uploads/
+
+# --- IDE ---
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# --- OS ---
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Python
-*.egg-info/
-dist/
-build/
-*.egg
-*.manifest
-*.spec
-
-# Logs
+# --- 日志 ---
 *.log
 npm-debug.log*
-yarn-debug.log*
 yarn-error.log*
 
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-
-# Virtual environments
-.venv
-env/
-ENV/
-
-# Distribution
-dist/
-build/
-*.egg-info/
-
-# Cache
-.cache/
-.mypy_cache/
-.pytest_cache/
-
-# Temporary files
+# --- 临时文件 ---
 *.tmp
 *.temp
+
+# --- Claude Code ---
+CLAUDE.md
+.claude/settings.local.json
+
+# --- 前端旧版 Demo ---
+frontend/demo-禁止修改/
+
+# --- 项目文档 ---
+docs/*
+!docs/harness.md
+
+# --- 个人笔记 ---
+daiban.txt
